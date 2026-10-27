@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: app
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: root
+    hikari:
+      auto-commit: false
+      pool-name: logistics_hub_cp
+      connection-timeout: 3000
+      idle-timeout: 300000
+      max-lifetime: 50000
+      maximum-pool-size: 10
+    url: jdbc:mysql://localhost:3306/logistics_hub?createDatabaseIfNotExist=true&connectionCollation=utf8mb4_general_ci
