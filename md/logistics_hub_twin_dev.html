@@ -1,0 +1,956 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>허브 상하차 디지털 트윈</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: center network strip (pick a center) → selected center's KPIs → 3D floor beside dock/event rail */
+:root{
+  --ground:#0E131A; --panel:#151C25; --raise:#1B2430; --line:#263242; --glass:rgba(14,19,26,0.84);
+  --fg:#E6ECF3; --muted:#93A2B5;
+  --safety:#F2B230; --info:#5AA9FF; --crit:#FF6A5C; --ok:#3FD08F;
+  --sans:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  color-scheme:dark;
+}
+html,body{background:var(--ground);color:var(--fg)}
+body{font-family:var(--sans);font-size:14px}
+.wrap{max-width:1680px;margin:0 auto;padding-block:20px 28px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:14px}
+
+/* 네트워크 */
+.network{display:flex;flex-direction:column;gap:10px}
+.net-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px}
+.net-head h2{margin:0;font-size:13px;font-weight:500;color:var(--muted);letter-spacing:.04em}
+.net-head h2 b{color:var(--fg);font-family:var(--mono);font-weight:600}
+.regions{display:flex;flex-wrap:wrap;gap:6px}
+.regions button{font:inherit;font-size:12px;color:var(--muted);background:transparent;border:1px solid var(--line);border-radius:999px;min-height:32px;padding:0 12px;cursor:pointer}
+.regions button[aria-pressed=true]{color:var(--fg);border-color:var(--fg)}
+.centers{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.center{font:inherit;color:inherit;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;cursor:pointer;min-width:0}
+.center:hover{border-color:#3A4A5F}
+.center[aria-pressed=true]{border-color:var(--safety);background:var(--raise)}
+.center .h{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.center .nm{display:flex;flex-direction:column;gap:2px;min-width:0}
+.center .nm b{font-size:15px;font-weight:600}
+.center .nm span{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.06em}
+.chip{font-size:11px;font-weight:500;padding:2px 8px;border-radius:999px;white-space:nowrap;color:var(--ok);background:rgba(63,208,143,.14)}
+.chip.warn{color:var(--safety);background:rgba(242,178,48,.14)}
+.chip.crit{color:var(--crit);background:rgba(255,106,92,.16)}
+.chip.paused{color:var(--muted);background:rgba(147,162,181,.14)}
+.center .st{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.center .st div{display:flex;flex-direction:column;gap:1px;min-width:0}
+.center .st span{font-size:10.5px;color:var(--muted);white-space:nowrap}
+.center .st b{font-family:var(--mono);font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+.center .st b.bad{color:var(--crit)}
+
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;padding-top:6px;border-top:1px solid var(--line)}
+.ident{display:flex;flex-direction:column;gap:6px;min-width:0;padding-top:10px}
+.eyebrow{display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-family:var(--mono);font-size:12px;letter-spacing:.08em;color:var(--muted)}
+h1{margin:0;font-size:26px;font-weight:600;letter-spacing:-.01em;text-wrap:balance}
+.pill{display:inline-flex;align-items:center;gap:6px;font-family:var(--sans);letter-spacing:0;font-size:12px;font-weight:500;padding:3px 10px;border-radius:999px;color:var(--ok);background:rgba(63,208,143,.14)}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.pill.paused{color:var(--safety);background:rgba(242,178,48,.14)}
+
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.clock{display:flex;flex-direction:column;align-items:flex-end;gap:2px;padding-right:6px}
+.clock b{font-family:var(--mono);font-size:26px;font-weight:600;font-variant-numeric:tabular-nums}
+.clock span{font-size:11px;color:var(--muted)}
+.ctl{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px 12px;min-height:44px;box-sizing:border-box}
+.ctl label,.ctl .lbl{font-size:12px;color:var(--muted);white-space:nowrap}
+.ctl input[type=range]{width:130px;accent-color:var(--safety)}
+.ctl output{font-family:var(--mono);font-size:13px;min-width:62px}
+.seg{display:flex;gap:4px}
+.seg button,.btn{font:inherit;font-size:13px;font-weight:500;color:var(--fg);background:var(--raise);border:1px solid var(--line);border-radius:8px;min-height:32px;padding:0 12px;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--safety);border-color:var(--safety);color:#1A1405}
+.btn{min-height:44px;border-radius:10px;padding:0 18px}
+button:focus-visible,input:focus-visible{outline:2px solid var(--info);outline-offset:2px}
+
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.kpi .k{font-size:12px;color:var(--muted)}
+.kpi .v{font-family:var(--mono);font-size:28px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.15}
+.kpi .v small{font-size:15px;color:var(--muted);font-weight:400}
+.kpi .s{font-size:12px;color:var(--muted)}
+.kpi.alert .v{color:var(--crit)}
+
+.layout{display:flex;flex-wrap:wrap;gap:14px;align-items:stretch}
+.stage{flex:999 1 720px;min-width:0;position:relative;height:clamp(420px,66vh,780px);border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--ground)}
+.stage canvas{display:block;width:100%;height:100%;touch-action:none}
+.tags{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.tag{position:absolute;left:0;top:0;transform:translate(-50%,-100%);background:var(--glass);border:1px solid var(--line);border-radius:8px;padding:4px 8px;font-family:var(--mono);font-size:12px;white-space:nowrap;display:flex;align-items:center;gap:6px;will-change:transform}
+.tag i{width:7px;height:7px;border-radius:50%;background:var(--info);flex:none}
+.tag em{font-style:normal;color:var(--muted);font-family:var(--sans);font-size:11px}
+.tag[data-s=wait] i{background:var(--safety)} .tag[data-s=wait]{border-color:rgba(242,178,48,.6)}
+.tag[data-s=jam] i{background:var(--crit)} .tag[data-s=jam]{border-color:var(--crit)}
+.tag.dock-tag{font-size:11px}
+.tag.dock-tag[data-s=late]{border-color:var(--crit)} .tag.dock-tag[data-s=late] b{color:var(--crit)}
+/* 이웃 라벨과 화면상 가까우면 compact: 부가 텍스트를 숨기거나 줄바꿈해 겹침을 막는다 */
+.tag.lane.compact{flex-wrap:wrap;justify-content:center;max-width:92px;row-gap:2px}
+.tag.lane.compact em{flex-basis:100%;text-align:center}
+.tag.lane.compact[data-s=load] em{display:none}
+.tag.dock-tag.compact .dn{display:none}
+.tag.fixed{color:var(--muted);font-size:11px;letter-spacing:.06em}
+
+.cams{position:absolute;left:12px;top:12px;display:flex;flex-wrap:wrap;gap:6px}
+.cams button{font:inherit;font-size:12px;font-weight:500;color:var(--fg);background:var(--glass);border:1px solid var(--line);border-radius:8px;min-height:34px;padding:0 12px;cursor:pointer}
+.cams button[aria-pressed=true]{border-color:var(--safety);color:var(--safety)}
+.hint{position:absolute;right:12px;bottom:10px;font-size:11px;color:var(--muted);background:var(--glass);padding:4px 8px;border-radius:6px}
+.legend{position:absolute;left:12px;bottom:10px;display:flex;flex-wrap:wrap;gap:12px;font-size:11px;color:var(--muted);background:var(--glass);padding:6px 10px;border-radius:8px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend span::before{content:"";width:9px;height:9px;border-radius:2px;background:var(--c)}
+
+.rail{flex:1 1 340px;min-width:0;display:flex;flex-direction:column;gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.card h2{margin:0;font-size:15px;font-weight:600;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.card h2 span{font-size:12px;font-weight:400;color:var(--muted)}
+.dock{display:grid;grid-template-columns:34px minmax(0,1fr) 70px;gap:10px;align-items:center;padding:9px 10px;border-radius:10px;background:var(--raise);border:1px solid var(--line)}
+.dock.late{border-color:rgba(255,106,92,.7)}
+.dock .d{font-family:var(--mono);font-weight:600;color:var(--muted);font-size:13px}
+.dock .mid{display:flex;flex-direction:column;gap:6px;min-width:0}
+.dock .row{display:flex;justify-content:space-between;gap:8px;font-size:13px}
+.dock .row span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dock .row span:last-child{font-family:var(--mono);color:var(--muted)}
+.bar{height:6px;border-radius:3px;background:var(--ground);overflow:hidden}
+.bar>div{height:100%;border-radius:3px;background:var(--info);transition:width .3s}
+.dock .eta{display:flex;flex-direction:column;align-items:flex-end;gap:1px}
+.dock .eta b{font-family:var(--mono);font-size:16px;font-variant-numeric:tabular-nums}
+.dock .eta span{font-size:11px;color:var(--muted)}
+.dock.late .eta b{color:var(--crit)}
+.log{display:flex;flex-direction:column;max-height:300px;overflow:auto}
+.log div{display:grid;grid-template-columns:62px 8px minmax(0,1fr);gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--raise);font-size:13px;line-height:1.4}
+.log time{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.log i{width:8px;height:8px;border-radius:50%;background:var(--info)}
+.log .warn i{background:var(--safety)} .log .crit i{background:var(--crit)}
+.fallback{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:24px;color:var(--muted)}
+
+@media (max-width:640px){
+  h1{font-size:22px}
+  .clock b{font-size:22px}
+  .stage{height:clamp(360px,60vh,520px)}
+  .tag{font-size:11px;padding:3px 6px}
+  .tag.dock-tag{display:none}
+  .hint{display:none}
+}
+</style>
+
+<div class="wrap">
+  <section class="network" aria-label="센터 네트워크">
+    <div class="net-head">
+      <h2>센터 네트워크 · <b id="netCount">0</b>개 센터 · 시뮬레이션 데이터</h2>
+      <div class="regions" id="regions" role="group" aria-label="지역 필터"></div>
+    </div>
+    <div class="centers" id="centers"></div>
+  </section>
+
+  <header class="top">
+    <div class="ident">
+      <div class="eyebrow"><span id="eyebrow">HUB-Y3 · 경기 남부 · 간선 상하차</span> <span class="pill" id="status">가동중</span></div>
+      <h1 id="title">용인 3센터</h1>
+    </div>
+    <div class="controls">
+      <div class="clock"><b id="clock">14:47:12</b><span>시뮬레이션 시각</span></div>
+      <div class="ctl">
+        <label for="speed">레일 유입량</label>
+        <input id="speed" type="range" min="1" max="5" step="1" value="3">
+        <output id="speedOut" for="speed">보통</output>
+      </div>
+      <div class="ctl">
+        <span class="lbl" id="forkLbl">집게차</span>
+        <div class="seg" role="group" aria-labelledby="forkLbl">
+          <button type="button" data-fork="1" aria-pressed="false">1대</button>
+          <button type="button" data-fork="2" aria-pressed="true">2대</button>
+        </div>
+      </div>
+      <button type="button" class="btn" id="pause">일시정지</button>
+    </div>
+  </header>
+
+  <section class="kpis" aria-label="선택한 센터의 핵심 지표">
+    <div class="kpi"><span class="k">시간당 분류량</span><span class="v" id="kPph">0</span><span class="s">개/시간 · 최근 60초</span></div>
+    <div class="kpi"><span class="k">금일 누적 처리</span><span class="v" id="kTotal">0</span><span class="s">06:00 근무 시작부터</span></div>
+    <div class="kpi"><span class="k">송장 판독률</span><span class="v" id="kRead">0</span><span class="s" id="kReject">리젝트 0건</span></div>
+    <div class="kpi" id="kJamBox"><span class="k">적체 분류구</span><span class="v"><span id="kJam">0</span><small> / 6</small></span><span class="s" id="kWait">집게차 대기 0곳</span></div>
+    <div class="kpi"><span class="k">간선 출발 완료</span><span class="v"><span id="kDep">0</span><small> 대</small></span><span class="s">11톤 윙바디 기준</span></div>
+  </section>
+
+  <main class="layout">
+    <div class="stage" id="stage">
+      <canvas id="scene" aria-label="선택한 센터의 3D 현장 화면"></canvas>
+      <div class="tags" id="tags"></div>
+      <div class="cams" role="group" aria-label="카메라 시점">
+        <button type="button" data-cam="all" aria-pressed="true">전체</button>
+        <button type="button" data-cam="rail" aria-pressed="false">레일 · 분류구</button>
+        <button type="button" data-cam="dock" aria-pressed="false">래핑 · 도크</button>
+      </div>
+      <div class="legend">
+        <span style="--c:var(--info)">적재중</span>
+        <span style="--c:var(--safety)">집게차 대기</span>
+        <span style="--c:var(--crit)">적체</span>
+      </div>
+      <div class="hint">드래그 회전 · 휠 확대</div>
+      <div class="fallback" id="fallback">이 브라우저에서는 3D 화면을 표시할 수 없어요. 센터 현황과 도크, 이벤트는 계속 갱신됩니다.</div>
+    </div>
+
+    <aside class="rail">
+      <section class="card" aria-label="도크 상차 현황">
+        <h2>도크 · 간선 트럭 <span>출발까지</span></h2>
+        <div id="docks" style="display:flex;flex-direction:column;gap:8px"></div>
+      </section>
+      <section class="card" aria-label="이벤트와 알람">
+        <h2>이벤트 · 알람</h2>
+        <div class="log" id="log"></div>
+      </section>
+    </aside>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (s) { return document.querySelector(s); };
+
+  /* ---------- 센터 설정: 센터를 늘리려면 여기에 한 줄씩 추가 ---------- */
+  var CENTER_CFG = [
+    { id: 'y3', name: '용인 3센터', code: 'HUB-Y3', region: '경기 남부', speed: 3, forks: 2,
+      lanes: [['A', '수도권 남부', 0.24], ['B', '수도권 북부', 0.20], ['C', '충청권', 0.15], ['D', '호남권', 0.14], ['E', '영남권', 0.17], ['F', '강원권', 0.10]],
+      seed: { processed: 18412, scanned: 18530, noRead: 118, departed: 7 } },
+    { id: 'y5', name: '용인 5센터', code: 'HUB-Y5', region: '경기 남부', speed: 4, forks: 2,
+      lanes: [['A', '서울 동부', 0.22], ['B', '서울 서부', 0.22], ['C', '경기 북부', 0.18], ['D', '인천', 0.16], ['E', '경기 남부', 0.14], ['F', '강원권', 0.08]],
+      seed: { processed: 24907, scanned: 25060, noRead: 153, departed: 11 } },
+    { id: 'ic', name: '이천 센터', code: 'HUB-IC', region: '경기 남부', speed: 3, forks: 1,
+      lanes: [['A', '경남권', 0.22], ['B', '경북권', 0.18], ['C', '전남권', 0.16], ['D', '전북권', 0.14], ['E', '충청권', 0.20], ['F', '제주', 0.10]],
+      seed: { processed: 15288, scanned: 15402, noRead: 114, departed: 5 } }
+  ];
+
+  /* ---------- 현장 치수 (모든 센터 공통 레이아웃) ---------- */
+  var CAP = 27, PALLETS_PER_TRUCK = 8;
+  var LX = function (i) { return -10 + i * 4; };
+  var BELT_Z = -12, BELT_Y = 1.0, SCAN_X = -13, BELT_START = -17, BELT_END = 15.4;
+  var PALLET_Z = -1.2, WRAP_X = [-4, 4], WRAP_Z = 3.4, DOCK_Z = 8.6;
+  var BR_V = 1.5, BR_GAP = 0.62;
+  var BR_TOP_Y = BELT_Y + 0.02, BR_TOP_Z = BELT_Z + 0.75, BR_BOT_Y = 0.62, BR_BOT_Z = PALLET_Z - 0.85;
+  var BR_LEN = Math.hypot(BR_BOT_Z - BR_TOP_Z, BR_TOP_Y - BR_BOT_Y);
+  var CHUTE_ANGLE = Math.atan2(BR_TOP_Y - BR_BOT_Y, BR_BOT_Z - BR_TOP_Z);
+  var SPEED_LABEL = ['', '매우 낮음', '낮음', '보통', '높음', '피크'];
+
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function fmt(sec) { return pad(Math.floor(sec / 3600) % 24) + ':' + pad(Math.floor(sec / 60) % 60) + ':' + pad(sec % 60); }
+  function mmss(sec) { sec = Math.max(0, sec); return pad(Math.floor(sec / 60)) + ':' + pad(sec % 60); }
+
+  /* ---------- 센터 시뮬레이션 (데이터만, 화면과 분리) ---------- */
+  function Center(cfg) {
+    this.cfg = cfg;
+    this.L = cfg.lanes.map(function (a) { return { code: a[0], name: a[1], w: a[2] }; });
+    this.running = true; this.speed = cfg.speed; this.forkN = cfg.forks;
+    this.t = 14 * 3600 + 47 * 60 + 12; this.secAcc = Math.random(); this.spawnAcc = 0; this.secCount = 0;
+    this.processed = cfg.seed.processed; this.scanned = cfg.seed.scanned; this.noRead = cfg.seed.noRead;
+    this.rejects = cfg.seed.noRead; this.recirc = 0; this.departed = cfg.seed.departed;
+    this.recent = [];
+    var avg = 0.42 * cfg.speed;
+    for (var r = 0; r < 60; r++) this.recent.push(Math.floor(avg) + (Math.random() < avg % 1 ? 1 : 0));
+    this.lanes = this.L.map(function () {
+      return { boxes: Math.floor(Math.random() * 24), status: 'load', wait: 0, backlog: 0, claimed: false, jamLogged: false, recircLog: -99 };
+    });
+    this.trucks = this.L.map(function () {
+      return { load: 0.15 + Math.random() * 0.7, eta: 300 + Math.floor(Math.random() * 2200), phase: 'docked', p: 0, z: 0 };
+    });
+    this.parcels = [];
+    for (var k = 0; k < 70; k++) this.parcels.push({ st: 'off', lane: 0, x: 0, s: 0, t: 0, read: null, recirc: false, halted: false, rotY: 0 });
+    this.Q = [[], [], [], [], [], []];
+    this.forks = [this.mkFork(-9, 0), this.mkFork(9, 1)];
+    this.wrappers = [0, 1].map(function () { return { show: false, film: 0, spin: 0, roll: 0.5 }; });
+    this.rjCount = 0; this.scanFlash = 0;
+    this.log = [];
+    this.say('info', 'D1 ' + this.L[0].name + ' · 간선 출발 (적재율 96%)');
+    this.say('info', 'D2 ' + this.L[1].name + ' · 파레트 상차 완료');
+  }
+  Center.prototype.mkFork = function (hx, idx) {
+    return { x: hx, z: 4.6, yaw: Math.PI, home: [hx, 4.6], phase: 'idle', path: [], lane: -1, timer: 0, wrap: idx, carry: false, film: false };
+  };
+  Center.prototype.say = function (lv, m) {
+    this.log.unshift({ t: fmt(this.t), lv: lv, m: m });
+    if (this.log.length > 12) this.log.length = 12;
+    this.logRev = (this.logRev || 0) + 1;
+  };
+  Center.prototype.pickLane = function () {
+    var x = Math.random(), a = 0;
+    for (var i = 0; i < 6; i++) { a += this.L[i].w; if (x < a) return i; }
+    return 5;
+  };
+  Center.prototype.accepts = function (i) { var l = this.lanes[i]; return l.status === 'load' && l.boxes < CAP; };
+  Center.prototype.arrive = function (i) {
+    this.processed++; this.secCount++;
+    var l = this.lanes[i];
+    l.boxes++;
+    if (l.boxes >= CAP) { l.status = 'wait'; l.wait = 0; this.say('info', this.L[i].code + ' 파레트 만재 · 집게차 호출'); }
+  };
+  Center.prototype.tickSecond = function () {
+    var c = this;
+    c.t++;
+    c.recent.shift(); c.recent.push(c.secCount); c.secCount = 0;
+    c.lanes.forEach(function (l) { if (l.status === 'wait') l.wait++; });
+    c.trucks.forEach(function (tr, i) {
+      if (tr.phase !== 'docked') return;
+      tr.eta--;
+      var tag = 'D' + (i + 1) + ' ' + c.L[i].name;
+      if (tr.load >= 0.999 || tr.eta <= 0) {
+        c.departed++;
+        var pct = Math.round(tr.load * 100);
+        if (pct < 85) c.say('crit', tag + ' · 적재율 ' + pct + '%로 출발'); else c.say('info', tag + ' · 간선 출발 (적재율 ' + pct + '%)');
+        tr.phase = 'leaving'; tr.p = 0;
+      } else if (tr.eta === 300 && tr.load < 0.85) {
+        c.say('warn', tag + ' · 출발 5분 전, 적재율 ' + Math.round(tr.load * 100) + '%');
+      }
+    });
+  };
+  Center.prototype.spawn = function () {
+    for (var k = 0; k < this.parcels.length; k++) {
+      var p = this.parcels[k];
+      if (p.st === 'off') {
+        p.st = 'belt'; p.lane = this.pickLane(); p.x = BELT_START + 0.3; p.read = null; p.t = 0; p.s = 0;
+        p.recirc = false; p.halted = false; p.rotY = (Math.random() - 0.5) * 0.4;
+        return;
+      }
+    }
+  };
+  Center.prototype.updateParcels = function (dt) {
+    var v = 2.6;
+    for (var k = 0; k < this.parcels.length; k++) {
+      var p = this.parcels[k];
+      if (p.st === 'belt') {
+        var px = p.x; p.x += v * dt;
+        if (p.read === null && px < SCAN_X && p.x >= SCAN_X) {
+          this.scanned++; this.scanFlash = 1;
+          p.read = Math.random() > 0.008;
+          if (!p.read) { this.noRead++; this.say('warn', 'NO READ · 송장 판독 실패 → 리젝트 슈트'); }
+        }
+        var lx = LX(p.lane);
+        if (p.read && !p.recirc && px < lx && p.x >= lx) {
+          var q = this.Q[p.lane];
+          if (q.length === 0 || q[q.length - 1].s >= BR_GAP) { p.st = 'branch'; p.s = 0; q.push(p); }
+          else {
+            p.recirc = true; this.recirc++;
+            var l = this.lanes[p.lane];
+            if (this.t - l.recircLog > 20) { l.recircLog = this.t; this.say('crit', this.L[p.lane].code + ' 분기 레일 만재 · 물량 재순환'); }
+          }
+        }
+        if (p.st === 'belt' && (p.read === false || p.recirc) && p.x >= BELT_END) { p.st = 'reject'; p.t = 0; }
+      } else if (p.st === 'reject') {
+        p.t += dt / 0.7;
+        if (p.t >= 1) { p.st = 'off'; this.rejects++; this.rjCount++; }
+      }
+    }
+  };
+  Center.prototype.updateBranches = function (dt) {
+    for (var i = 0; i < 6; i++) {
+      var q = this.Q[i], l = this.lanes[i];
+      while (q.length && q[0].s >= BR_LEN - 0.001 && this.accepts(i)) { q.shift().st = 'off'; this.arrive(i); }
+      var stopped = 0, chain = true;
+      for (var j = 0; j < q.length; j++) {
+        var p = q[j];
+        var limit = j === 0 ? BR_LEN : q[j - 1].s - BR_GAP;
+        var ns = Math.min(p.s + BR_V * dt, limit);
+        if (dt > 0) p.halted = ns <= p.s + 1e-4;
+        p.s = Math.max(p.s, ns);
+        if (chain && p.halted) stopped++; else chain = false;
+      }
+      l.backlog = stopped;
+      if (stopped >= 6 && !l.jamLogged) { l.jamLogged = true; this.say('crit', this.L[i].code + ' 분류구 적체 · 분기 레일에 ' + stopped + '개 대기'); }
+      if (stopped === 0) l.jamLogged = false;
+    }
+  };
+  Center.prototype.moveFork = function (f, dt) {
+    if (!f.path.length) return false;
+    var tgt = f.path[0], dx = tgt[0] - f.x, dz = tgt[1] - f.z, d = Math.hypot(dx, dz), step = 4.2 * dt;
+    if (d > 0.01) {
+      var want = Math.atan2(dx, dz), diff = Math.atan2(Math.sin(want - f.yaw), Math.cos(want - f.yaw));
+      f.yaw += diff * Math.min(1, dt * 9);
+    }
+    if (d <= step) { f.x = tgt[0]; f.z = tgt[1]; f.path.shift(); return f.path.length === 0; }
+    f.x += dx / d * step; f.z += dz / d * step;
+    return false;
+  };
+  Center.prototype.updateFork = function (f, idx, dt) {
+    var c = this, arrived = this.moveFork(f, dt);
+    if ((f.phase === 'idle' || f.phase === 'home') && idx < c.forkN) {
+      var best = -1;
+      c.lanes.forEach(function (l, i) { if (l.status === 'wait' && !l.claimed && (best < 0 || l.wait > c.lanes[best].wait)) best = i; });
+      if (best >= 0) {
+        c.lanes[best].claimed = true; f.lane = best; f.phase = 'toLane';
+        f.path = [[LX(best), 1.9], [LX(best), PALLET_Z + 1.45]];
+        return;
+      }
+    }
+    if (!arrived && f.phase !== 'wrapping' && f.phase !== 'waitTruck') return;
+    var wx = WRAP_X[f.wrap], lx = LX(f.lane < 0 ? 0 : f.lane), w = c.wrappers[f.wrap];
+    switch (f.phase) {
+      case 'toLane':
+        var l = c.lanes[f.lane];
+        f.carry = true; f.film = false;
+        l.boxes = 0; l.status = 'load'; l.claimed = false; l.wait = 0;
+        f.phase = 'toWrap'; f.path = [[lx, 1.9], [wx, 0.9], [wx, WRAP_Z - 1.45]];
+        break;
+      case 'toWrap':
+        f.carry = false; w.show = true; w.film = 0.01;
+        f.phase = 'wrapping'; f.timer = 0;
+        break;
+      case 'wrapping':
+        f.timer += dt;
+        var prog = Math.min(1, f.timer / 4);
+        w.spin += dt * 3.2; w.film = Math.max(0.01, prog * 1.08);
+        w.roll = 0.4 + Math.abs(Math.sin(prog * Math.PI * 2)) * 0.8;
+        if (f.timer >= 4) {
+          w.show = false; w.roll = 0.5; f.carry = true; f.film = true;
+          f.phase = 'toStage'; f.path = [[wx, 5.0], [lx, 5.0]];
+        }
+        break;
+      case 'toStage':
+        f.phase = 'waitTruck';
+        break;
+      case 'waitTruck':
+        if (c.trucks[f.lane].phase === 'docked') { f.phase = 'toDock'; f.path = [[lx, DOCK_Z - 1.6]]; }
+        break;
+      case 'toDock':
+        var tr = c.trucks[f.lane];
+        tr.load = Math.min(1, tr.load + 1 / PALLETS_PER_TRUCK);
+        c.say('info', 'D' + (f.lane + 1) + ' ' + c.L[f.lane].name + ' · 파레트 상차 완료');
+        f.carry = false; f.phase = 'home'; f.path = [[lx, 5.0], f.home]; f.lane = -1;
+        break;
+      case 'home':
+        f.phase = 'idle';
+        break;
+    }
+  };
+  Center.prototype.updateTrucks = function (dt) {
+    this.trucks.forEach(function (tr) {
+      if (tr.phase === 'leaving') {
+        tr.p += dt / 3.2; var e = Math.min(1, tr.p); tr.z = e * e * 34;
+        if (tr.p >= 1) { tr.load = 0; tr.eta = 600 + Math.floor(Math.random() * 600); tr.phase = 'arriving'; tr.p = 0; }
+      } else if (tr.phase === 'arriving') {
+        tr.p += dt / 3.2; var e2 = Math.min(1, tr.p); tr.z = (1 - e2) * (1 - e2) * 34;
+        if (tr.p >= 1) { tr.phase = 'docked'; tr.z = 0; }
+      }
+    });
+  };
+  Center.prototype.update = function (raw) {
+    var dt = this.running ? raw : 0, c = this;
+    if (this.running) {
+      this.spawnAcc += dt * 0.42 * this.speed;
+      while (this.spawnAcc >= 1) { this.spawn(); this.spawnAcc -= 1; }
+      this.secAcc += dt;
+      while (this.secAcc >= 1) { this.tickSecond(); this.secAcc -= 1; }
+    }
+    this.updateParcels(dt);
+    this.updateBranches(dt);
+    this.forks.forEach(function (f, i) { c.updateFork(f, i, dt); });
+    this.updateTrucks(dt);
+    this.scanFlash = Math.max(0, this.scanFlash - raw * 4);
+  };
+  Center.prototype.truckStatus = function (tr) {
+    if (tr.phase === 'leaving') return { t: '출발', late: false };
+    if (tr.phase === 'arriving') return { t: '진입 중', late: false };
+    var late = tr.eta < 300 && tr.load < 0.85;
+    return { t: late ? '마감 임박' : (tr.load >= 0.85 ? '상차 마무리' : '상차 중'), late: late };
+  };
+  Center.prototype.kpi = function () {
+    var c = this, sum = c.recent.reduce(function (a, b) { return a + b; }, 0), jam = 0, wait = 0, late = 0;
+    c.lanes.forEach(function (l) { if (l.backlog >= 6) jam++; if (l.status === 'wait') wait++; });
+    c.trucks.forEach(function (tr) { if (c.truckStatus(tr).late) late++; });
+    return {
+      pph: Math.round(sum / c.recent.length * 3600),
+      read: (c.scanned - c.noRead) / c.scanned * 100,
+      jam: jam, wait: wait, late: late,
+      level: !c.running ? 'paused' : (jam > 0 ? 'crit' : (wait >= 2 || late > 0 ? 'warn' : 'ok'))
+    };
+  };
+
+  var centers = CENTER_CFG.map(function (cfg) { return new Center(cfg); });
+  var byId = {}; centers.forEach(function (c) { byId[c.cfg.id] = c; });
+  var initial = (location.hash || '').replace('#', '');
+  var cur = byId[initial] || centers[0];
+
+  /* ---------- 네트워크 스트립 ---------- */
+  var regionFilter = '전체';
+  var regions = ['전체'].concat(CENTER_CFG.map(function (c) { return c.region; }).filter(function (r, i, a) { return a.indexOf(r) === i; }));
+  regions.forEach(function (r) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.textContent = r; b.setAttribute('aria-pressed', String(r === regionFilter));
+    b.addEventListener('click', function () {
+      regionFilter = r;
+      document.querySelectorAll('#regions button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+      centerCards.forEach(function (cc) { cc.el.hidden = !(r === '전체' || cc.c.cfg.region === r); });
+    });
+    $('#regions').appendChild(b);
+  });
+  $('#netCount').textContent = centers.length;
+  var LEVEL_TEXT = { ok: '정상', warn: '주의', crit: '적체', paused: '정지' };
+  var centerCards = centers.map(function (c) {
+    var el = document.createElement('button');
+    el.type = 'button'; el.className = 'center';
+    el.innerHTML = '<div class="h"><div class="nm"><b></b><span></span></div><span class="chip"></span></div>' +
+      '<div class="st"><div><span>시간당</span><b class="pph">0</b></div><div><span>판독률</span><b class="rd">0</b></div>' +
+      '<div><span>적체</span><b class="jm">0</b></div><div><span>출발</span><b class="dp">0</b></div></div>';
+    el.querySelector('.nm b').textContent = c.cfg.name;
+    el.querySelector('.nm span').textContent = c.cfg.code + ' · ' + c.cfg.region;
+    el.addEventListener('click', function () { selectCenter(c); });
+    $('#centers').appendChild(el);
+    return { c: c, el: el, chip: el.querySelector('.chip'), pph: el.querySelector('.pph'), rd: el.querySelector('.rd'), jm: el.querySelector('.jm'), dp: el.querySelector('.dp') };
+  });
+
+  /* ---------- 선택 센터 패널 ---------- */
+  var dockRows = [0, 1, 2, 3, 4, 5].map(function (i) {
+    var el = document.createElement('div');
+    el.className = 'dock';
+    el.innerHTML = '<span class="d">D' + (i + 1) + '</span>' +
+      '<div class="mid"><div class="row"><span class="nm"></span><span class="pct">0%</span></div><div class="bar"><div></div></div></div>' +
+      '<div class="eta"><b>00:00</b><span>상차 중</span></div>';
+    $('#docks').appendChild(el);
+    return { el: el, nm: el.querySelector('.nm'), pct: el.querySelector('.pct'), bar: el.querySelector('.bar>div'), eta: el.querySelector('.eta b'), st: el.querySelector('.eta span') };
+  });
+  var shownLogRev = -1;
+
+  function syncControls() {
+    $('#title').textContent = cur.cfg.name;
+    $('#eyebrow').textContent = cur.cfg.code + ' · ' + cur.cfg.region + ' · 간선 상하차';
+    $('#speed').value = cur.speed;
+    $('#speedOut').textContent = SPEED_LABEL[cur.speed];
+    document.querySelectorAll('[data-fork]').forEach(function (x) { x.setAttribute('aria-pressed', String(Number(x.dataset.fork) === cur.forkN)); });
+    $('#pause').textContent = cur.running ? '일시정지' : '재개';
+    $('#status').textContent = cur.running ? '가동중' : '일시정지';
+    $('#status').classList.toggle('paused', !cur.running);
+    dockRows.forEach(function (d, i) { d.nm.textContent = cur.L[i].code + ' · ' + cur.L[i].name; });
+    centerCards.forEach(function (cc) { cc.el.setAttribute('aria-pressed', String(cc.c === cur)); });
+    shownLogRev = -1;
+  }
+
+  function renderPanel() {
+    centerCards.forEach(function (cc) {
+      var k = cc.c.kpi();
+      cc.pph.textContent = k.pph.toLocaleString('ko-KR');
+      cc.rd.textContent = k.read.toFixed(1) + '%';
+      cc.jm.textContent = k.jam; cc.jm.classList.toggle('bad', k.jam > 0);
+      cc.dp.textContent = cc.c.departed;
+      cc.chip.textContent = LEVEL_TEXT[k.level];
+      cc.chip.className = 'chip' + (k.level === 'ok' ? '' : ' ' + k.level);
+    });
+    var c = cur, k = c.kpi();
+    $('#kPph').textContent = k.pph.toLocaleString('ko-KR');
+    $('#kTotal').textContent = c.processed.toLocaleString('ko-KR');
+    $('#kRead').textContent = k.read.toFixed(2) + '%';
+    $('#kReject').textContent = '리젝트 ' + c.rejects + '건 · 재순환 ' + c.recirc + '건';
+    $('#kJam').textContent = k.jam;
+    $('#kJamBox').classList.toggle('alert', k.jam > 0);
+    $('#kWait').textContent = '집게차 대기 ' + k.wait + '곳';
+    $('#kDep').textContent = c.departed;
+    $('#clock').textContent = fmt(c.t);
+    c.trucks.forEach(function (tr, i) {
+      var d = dockRows[i], st = c.truckStatus(tr), pct = Math.round(tr.load * 100);
+      d.pct.textContent = pct + '%';
+      d.bar.style.width = pct + '%';
+      d.bar.style.background = st.late ? 'var(--crit)' : (tr.load >= 0.85 ? 'var(--ok)' : 'var(--info)');
+      d.eta.textContent = tr.phase === 'docked' ? mmss(tr.eta) : '--:--';
+      d.st.textContent = st.t;
+      d.el.classList.toggle('late', st.late);
+    });
+    if (shownLogRev !== c.logRev) {
+      shownLogRev = c.logRev;
+      var box = $('#log'); box.textContent = '';
+      c.log.forEach(function (e) {
+        var row = document.createElement('div'); row.className = e.lv;
+        var tm = document.createElement('time'); tm.textContent = e.t;
+        var dot = document.createElement('i');
+        var msg = document.createElement('span'); msg.textContent = e.m;
+        row.appendChild(tm); row.appendChild(dot); row.appendChild(msg); box.appendChild(row);
+      });
+    }
+  }
+
+  var onSelect = null;
+  function selectCenter(c) { cur = c; syncControls(); renderPanel(); if (onSelect) onSelect(); }
+
+  $('#speed').addEventListener('input', function (e) { cur.speed = Number(e.target.value); $('#speedOut').textContent = SPEED_LABEL[cur.speed]; });
+  document.querySelectorAll('[data-fork]').forEach(function (b) {
+    b.addEventListener('click', function () { cur.forkN = Number(b.dataset.fork); syncControls(); });
+  });
+  $('#pause').addEventListener('click', function () { cur.running = !cur.running; syncControls(); renderPanel(); });
+
+  syncControls();
+  renderPanel();
+
+  function headless() {
+    $('#fallback').style.display = 'flex';
+    var lastH = performance.now();
+    setInterval(function () {
+      var now = performance.now(), dt = Math.min(0.25, (now - lastH) / 1000); lastH = now;
+      centers.forEach(function (c) { c.update(dt); });
+      renderPanel();
+    }, 100);
+  }
+
+  /* ---------- 3D 씬 ---------- */
+  if (!window.THREE) { headless(); return; }
+  var stage = $('#stage'), canvas = $('#scene'), renderer;
+  try { renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true }); }
+  catch (err) { headless(); return; }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.outputEncoding = THREE.sRGBEncoding;
+
+  var scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0e131a);
+  scene.fog = new THREE.Fog(0x0e131a, 48, 95);
+
+  var camera = new THREE.PerspectiveCamera(40, 1, 0.1, 200);
+  var CAMS = {
+    all: { p: [-6, 29, 31], t: [0, 0, 0.5] },
+    rail: { p: [-17, 11, 0], t: [-1, 0.8, -7] },
+    dock: { p: [13, 10, 22], t: [0, 0.6, 7.5] }
+  };
+  camera.position.fromArray(CAMS.all.p);
+  var controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.target.fromArray(CAMS.all.t);
+  controls.enableDamping = true; controls.dampingFactor = 0.08;
+  controls.maxPolarAngle = Math.PI * 0.46; controls.minDistance = 8; controls.maxDistance = 70;
+
+  scene.add(new THREE.HemisphereLight(0xc7d8ff, 0x161b22, 0.6));
+  var sun = new THREE.DirectionalLight(0xffffff, 0.95);
+  sun.position.set(-14, 28, 16); sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  var sc = sun.shadow.camera; sc.left = -28; sc.right = 28; sc.top = 26; sc.bottom = -26; sc.near = 1; sc.far = 90;
+  sun.shadow.bias = -0.0005;
+  scene.add(sun);
+  var warm = new THREE.PointLight(0xffc477, 0.5, 18); warm.position.set(0, 6, 3.4); scene.add(warm);
+
+  function mat(c, o) { return new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.82, metalness: 0.08 }, o || {})); }
+  function mesh(geo, m, shadow) { var x = new THREE.Mesh(geo, m); if (shadow !== false) { x.castShadow = true; x.receiveShadow = true; } return x; }
+  function boxM(w, h, d, m) { return mesh(new THREE.BoxGeometry(w, h, d), m); }
+  function at(o, x, y, z) { o.position.set(x, y, z); return o; }
+
+  var M = {
+    floor: mat(0x1a212b, { roughness: 0.95 }), steel: mat(0x6b7785, { metalness: 0.5, roughness: 0.45 }),
+    dark: mat(0x2a323d), darker: mat(0x161c24), yellow: mat(0xf2b230, { roughness: 0.55 }),
+    wood: mat(0xa47447), card: mat(0xc8965a, { roughness: 0.9 }), white: mat(0xd8dde3, { metalness: 0.25, roughness: 0.5 }),
+    cab: mat(0x355b8a, { metalness: 0.3, roughness: 0.45 }), glass: mat(0x0b1118, { metalness: 0.6, roughness: 0.15 }),
+    rubber: mat(0x111418, { roughness: 0.9 }), mark: new THREE.MeshBasicMaterial({ color: 0xf2b230 }),
+    markDim: new THREE.MeshBasicMaterial({ color: 0x2b3542 })
+  };
+  var i, k;
+
+  /* 바닥 */
+  var floor = mesh(new THREE.PlaneGeometry(70, 50), M.floor); floor.rotation.x = -Math.PI / 2; floor.position.z = 2; scene.add(floor);
+  var grid = new THREE.GridHelper(70, 70, 0x232d3a, 0x1d2530); grid.position.set(0, 0.005, 2); scene.add(grid);
+  function floorLine(x1, z1, x2, z2, w, m) {
+    var p = new THREE.Mesh(new THREE.PlaneGeometry(Math.hypot(x2 - x1, z2 - z1), w), m);
+    p.rotation.x = -Math.PI / 2; p.rotation.z = -Math.atan2(z2 - z1, x2 - x1);
+    p.position.set((x1 + x2) / 2, 0.012, (z1 + z2) / 2); scene.add(p);
+  }
+  floorLine(-15, 0.95, 15, 0.95, 0.12, M.mark);
+  floorLine(-15, 6.1, 15, 6.1, 0.12, M.mark);
+  for (i = 0; i < 6; i++) {
+    var x0 = LX(i);
+    floorLine(x0 - 0.8, PALLET_Z - 0.8, x0 + 0.8, PALLET_Z - 0.8, 0.06, M.markDim);
+    floorLine(x0 - 0.8, PALLET_Z + 0.8, x0 + 0.8, PALLET_Z + 0.8, 0.06, M.markDim);
+    floorLine(x0 - 0.8, PALLET_Z - 0.8, x0 - 0.8, PALLET_Z + 0.8, 0.06, M.markDim);
+    floorLine(x0 + 0.8, PALLET_Z - 0.8, x0 + 0.8, PALLET_Z + 0.8, 0.06, M.markDim);
+  }
+
+  /* 메인 레일 */
+  var beltLen = BELT_END - BELT_START, beltCx = (BELT_END + BELT_START) / 2;
+  scene.add(at(boxM(beltLen, 0.18, 1.4, M.steel), beltCx, BELT_Y - 0.1, BELT_Z));
+  var bc = document.createElement('canvas'); bc.width = 64; bc.height = 64;
+  var g2 = bc.getContext('2d'); g2.fillStyle = '#20272f'; g2.fillRect(0, 0, 64, 64); g2.fillStyle = '#2c3540'; g2.fillRect(0, 0, 10, 64);
+  var beltTex = new THREE.CanvasTexture(bc); beltTex.wrapS = beltTex.wrapT = THREE.RepeatWrapping; beltTex.repeat.set(beltLen * 1.5, 1);
+  var belt = mesh(new THREE.PlaneGeometry(beltLen, 1.2), new THREE.MeshStandardMaterial({ map: beltTex, roughness: 0.9 }), false);
+  belt.receiveShadow = true; belt.rotation.x = -Math.PI / 2; belt.position.set(beltCx, BELT_Y + 0.001, BELT_Z); scene.add(belt);
+  [-0.68, 0.68].forEach(function (dz) { scene.add(at(boxM(beltLen, 0.26, 0.08, M.steel), beltCx, BELT_Y + 0.08, BELT_Z + dz)); });
+  for (var lg = BELT_START + 0.6; lg < BELT_END; lg += 2.6) {
+    [-0.55, 0.55].forEach(function (dz) { scene.add(at(boxM(0.12, BELT_Y - 0.1, 0.12, M.dark), lg, (BELT_Y - 0.1) / 2, BELT_Z + dz)); });
+  }
+
+  /* 스캔 터널 */
+  var scan = new THREE.Group();
+  [-0.95, 0.95].forEach(function (dz) { scan.add(at(boxM(0.22, 2.4, 0.22, M.dark), 0, 1.2, dz)); });
+  scan.add(at(boxM(0.5, 0.45, 2.2, M.dark), 0, 2.45, 0));
+  var beamMat = new THREE.MeshBasicMaterial({ color: 0x5aa9ff, transparent: true, opacity: 0.12, depthWrite: false });
+  scan.add(at(new THREE.Mesh(new THREE.BoxGeometry(0.04, 1.1, 1.3), beamMat), 0, 1.65, 0));
+  var scanLight = new THREE.PointLight(0x5aa9ff, 0, 5); scanLight.position.set(0, 2.0, 0); scan.add(scanLight);
+  scan.position.set(SCAN_X, 0, BELT_Z); scene.add(scan);
+
+  /* 분기 레일 */
+  function brTop(i) { return new THREE.Vector3(LX(i), BR_TOP_Y, BR_TOP_Z); }
+  function brBot(i) { return new THREE.Vector3(LX(i), BR_BOT_Y, BR_BOT_Z); }
+  var branchTexs = [];
+  for (i = 0; i < 6; i++) {
+    var a = brTop(i), b = brBot(i), ch = new THREE.Group();
+    ch.add(at(boxM(1.25, 0.12, BR_LEN, M.steel), 0, -0.08, 0));
+    var bt = beltTex.clone(); bt.needsUpdate = true; bt.center.set(0.5, 0.5); bt.rotation = Math.PI / 2; bt.repeat.set(BR_LEN * 1.5, 1);
+    branchTexs.push(bt);
+    var topM = mesh(new THREE.PlaneGeometry(1.05, BR_LEN), new THREE.MeshStandardMaterial({ map: bt, roughness: 0.9 }), false);
+    topM.receiveShadow = true; topM.rotation.x = -Math.PI / 2; ch.add(topM);
+    [-0.6, 0.6].forEach(function (dx) { ch.add(at(boxM(0.06, 0.22, BR_LEN, M.steel), dx, 0.06, 0)); });
+    ch.position.set(a.x, (a.y + b.y) / 2, (a.z + b.z) / 2);
+    ch.rotation.x = CHUTE_ANGLE;
+    scene.add(ch);
+    for (var s0 = 0.6; s0 < BR_LEN; s0 += 2.2) {
+      var lp = a.clone().lerp(b, s0 / BR_LEN);
+      [-0.5, 0.5].forEach(function (o) { scene.add(at(boxM(0.1, lp.y - 0.08, 0.1, M.dark), lp.x + o, (lp.y - 0.08) / 2, lp.z)); });
+    }
+  }
+
+  /* 리젝트 슈트 */
+  var rj = boxM(2.2, 0.06, 1.2, M.steel);
+  rj.position.set(BELT_END + 1.0, 0.68, BELT_Z); rj.rotation.z = -0.32; scene.add(rj);
+  var cage = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1.6, 1.0, 1.6)), new THREE.LineBasicMaterial({ color: 0xff6a5c }));
+  cage.position.set(BELT_END + 2.6, 0.5, BELT_Z); scene.add(cage);
+  var rejectPile = new THREE.InstancedMesh(new THREE.BoxGeometry(0.42, 0.34, 0.42), mat(0xb9564a), 8);
+  rejectPile.castShadow = true; rejectPile.frustumCulled = false; rejectPile.count = 0;
+  for (k = 0; k < 8; k++) {
+    var rm = new THREE.Matrix4().makeRotationY(k * 0.7);
+    rm.setPosition(BELT_END + 2.6 + ((k % 3) - 1) * 0.45, 0.17 + Math.floor(k / 6) * 0.34, BELT_Z + ((Math.floor(k / 3) % 2) - 0.5) * 0.5);
+    rejectPile.setMatrixAt(k, rm);
+  }
+  scene.add(rejectPile);
+
+  /* 파레트 유닛 */
+  var boxGeo = new THREE.BoxGeometry(0.36, 0.3, 0.36);
+  var filmGeo = new THREE.CylinderGeometry(0.9, 0.9, 1.0, 28, 1, true); filmGeo.translate(0, 0.5, 0);
+  var filmMat = new THREE.MeshStandardMaterial({ color: 0xe8f1ff, transparent: true, opacity: 0.32, roughness: 0.2, metalness: 0.1, side: THREE.DoubleSide, depthWrite: false });
+  function palletUnit() {
+    var g = new THREE.Group();
+    g.add(at(boxM(1.2, 0.14, 1.2, M.wood), 0, 0.07, 0));
+    var inst = new THREE.InstancedMesh(boxGeo, mat(0xffffff, { roughness: 0.9 }), CAP);
+    inst.castShadow = true; inst.receiveShadow = true; inst.frustumCulled = false;
+    var m4 = new THREE.Matrix4(), c = new THREE.Color();
+    for (var n = 0; n < CAP; n++) {
+      var layer = Math.floor(n / 9), rr = n % 9;
+      m4.makeTranslation(((rr % 3) - 1) * 0.38, 0.14 + 0.15 + layer * 0.31, (Math.floor(rr / 3) - 1) * 0.38);
+      inst.setMatrixAt(n, m4);
+      c.setHSL(0.075 + Math.random() * 0.02, 0.42, 0.42 + Math.random() * 0.1); inst.setColorAt(n, c);
+    }
+    inst.count = 0; g.add(inst); g.userData.inst = inst;
+    var film = new THREE.Mesh(filmGeo, filmMat); film.position.y = 0.14; film.visible = false; g.add(film); g.userData.film = film;
+    return g;
+  }
+
+  var laneObjs = [];
+  for (i = 0; i < 6; i++) {
+    var pu = palletUnit(); pu.position.set(LX(i), 0, PALLET_Z); scene.add(pu);
+    var ring = new THREE.Mesh(new THREE.RingGeometry(1.0, 1.18, 48), new THREE.MeshBasicMaterial({ color: 0xff6a5c, transparent: true, opacity: 0, depthWrite: false }));
+    ring.rotation.x = -Math.PI / 2; ring.position.set(LX(i), 0.02, PALLET_Z); scene.add(ring);
+    laneObjs.push({ unit: pu, ring: ring });
+  }
+
+  /* 래핑 스테이션 */
+  var wrapObjs = WRAP_X.map(function (wx) {
+    var root = new THREE.Group(); root.position.set(wx, 0, WRAP_Z); scene.add(root);
+    var spin = new THREE.Group(); root.add(spin);
+    spin.add(at(mesh(new THREE.CylinderGeometry(0.95, 0.95, 0.12, 32), M.dark), 0, 0.06, 0));
+    var unit = palletUnit(); unit.position.y = 0.12; unit.userData.inst.count = CAP; unit.visible = false; spin.add(unit);
+    unit.userData.film.visible = true;
+    root.add(at(boxM(0.22, 2.6, 0.22, M.steel), 1.3, 1.3, 0));
+    var roll = at(mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.5, 14), mat(0xe8f1ff, { roughness: 0.3 })), 1.1, 0.5, 0);
+    root.add(roll);
+    return { spin: spin, unit: unit, roll: roll };
+  });
+
+  /* 도크와 트럭 */
+  var stripeC = document.createElement('canvas'); stripeC.width = 64; stripeC.height = 16;
+  var sg = stripeC.getContext('2d'); sg.fillStyle = '#f2b230'; sg.fillRect(0, 0, 64, 16); sg.fillStyle = '#1a1d22';
+  for (var sx = -16; sx < 64; sx += 16) { sg.beginPath(); sg.moveTo(sx, 16); sg.lineTo(sx + 8, 16); sg.lineTo(sx + 16, 0); sg.lineTo(sx + 8, 0); sg.closePath(); sg.fill(); }
+  var stripeTex = new THREE.CanvasTexture(stripeC); stripeTex.wrapS = THREE.RepeatWrapping; stripeTex.repeat.set(3, 1);
+  var stripeMat = new THREE.MeshStandardMaterial({ map: stripeTex, roughness: 0.7 });
+  scene.add(at(boxM(30, 0.9, 0.5, M.dark), 0, 0.45, DOCK_Z - 0.25));
+  var truckObjs = [];
+  var hiddenMat = new THREE.MeshBasicMaterial({ visible: false });
+  var roofMat = new THREE.MeshStandardMaterial({ color: 0xd8dde3, transparent: true, opacity: 0.16, depthWrite: false });
+  var wheelGeo = new THREE.CylinderGeometry(0.42, 0.42, 0.35, 18); wheelGeo.rotateZ(Math.PI / 2);
+  for (i = 0; i < 6; i++) {
+    var dx = LX(i);
+    [-1.55, 1.55].forEach(function (o) { scene.add(at(boxM(0.18, 3.4, 0.3, M.steel), dx + o, 1.7, DOCK_Z - 0.25)); });
+    scene.add(at(boxM(3.3, 0.3, 0.3, M.steel), dx, 3.5, DOCK_Z - 0.25));
+    scene.add(at(boxM(3.0, 0.22, 0.12, stripeMat), dx, 0.95, DOCK_Z + 0.02));
+    var rig = new THREE.Group(); rig.position.set(dx, 0, 0); scene.add(rig);
+    var TL = 6.0, tz = DOCK_Z + 0.2 + TL / 2;
+    rig.add(at(mesh(new THREE.BoxGeometry(2.5, 2.7, TL), [M.white, M.white, roofMat, M.white, M.white, hiddenMat]), 0, 2.35, tz));
+    rig.add(at(boxM(2.3, 0.3, TL + 0.4, M.darker), 0, 0.8, tz + 0.2));
+    var cargo = boxM(2.2, 2.3, 1, M.card); cargo.position.set(0, 2.17, 0); rig.add(cargo);
+    rig.add(at(boxM(2.4, 2.2, 1.9, M.cab), 0, 2.0, DOCK_Z + 0.2 + TL + 1.3));
+    rig.add(at(boxM(2.2, 0.9, 0.05, M.glass), 0, 2.55, DOCK_Z + 0.2 + TL + 2.27));
+    [tz - 1.9, tz - 1.0, DOCK_Z + 0.2 + TL + 1.3].forEach(function (wz) {
+      [-1.05, 1.05].forEach(function (wx) { rig.add(at(mesh(wheelGeo, M.rubber), wx, 0.42, wz)); });
+    });
+    truckObjs.push({ rig: rig, cargo: cargo, front: DOCK_Z + 0.2 + TL - 0.15, depth: TL - 0.4 });
+  }
+
+  /* 집게차 */
+  function makeForklift() {
+    var g = new THREE.Group();
+    g.add(at(boxM(1.1, 0.8, 1.5, M.yellow), 0, 0.62, -0.25));
+    g.add(at(boxM(1.12, 0.6, 0.42, M.dark), 0, 0.55, -1.1));
+    [[-0.5, -0.85], [0.5, -0.85], [-0.5, 0.35], [0.5, 0.35]].forEach(function (p) { g.add(at(boxM(0.06, 1.2, 0.06, M.darker), p[0], 1.6, p[1])); });
+    g.add(at(boxM(1.1, 0.06, 1.3, M.darker), 0, 2.2, -0.25));
+    [-0.36, 0.36].forEach(function (x) { g.add(at(boxM(0.1, 2.4, 0.1, M.steel), x, 1.2, 0.62)); });
+    [-0.3, 0.3].forEach(function (x) { g.add(at(boxM(0.12, 0.05, 1.15, M.steel), x, 0.2, 1.25)); });
+    var wg = new THREE.CylinderGeometry(0.26, 0.26, 0.2, 16); wg.rotateZ(Math.PI / 2);
+    [[-0.58, 0.3], [0.58, 0.3], [-0.58, -0.85], [0.58, -0.85]].forEach(function (p) { g.add(at(mesh(wg, M.rubber), p[0], 0.26, p[1])); });
+    var carried = palletUnit(); carried.position.set(0, 0.22, 1.4); carried.userData.inst.count = CAP; carried.visible = false; g.add(carried);
+    scene.add(g);
+    return { g: g, carried: carried };
+  }
+  var forkObjs = [makeForklift(), makeForklift()];
+
+  /* 컨베이어 화물 메쉬 (선택 센터의 데이터를 비춤) */
+  var parcelGeo = new THREE.BoxGeometry(0.5, 0.38, 0.46);
+  var parcelMeshes = [];
+  for (k = 0; k < 70; k++) {
+    var pm = mesh(parcelGeo, mat(0xc8965a, { roughness: 0.9 })); pm.visible = false; scene.add(pm); parcelMeshes.push(pm);
+  }
+
+  /* 라벨 */
+  var tagsEl = $('#tags');
+  function makeTag(cls, html) { var d = document.createElement('div'); d.className = 'tag ' + cls; d.innerHTML = html; tagsEl.appendChild(d); return d; }
+  var laneTags = [0, 1, 2, 3, 4, 5].map(function (i) {
+    var d = makeTag('lane', '<i></i><b>' + 'ABCDEF'[i] + '</b><span class="p">0%</span><em class="s">적재중</em>');
+    return { el: d, p: d.querySelector('.p'), s: d.querySelector('.s'), pos: new THREE.Vector3(), scr: { on: false, x: 0, y: 0 } };
+  });
+  var dockTags = [0, 1, 2, 3, 4, 5].map(function (i) {
+    var d = makeTag('dock-tag', '<span class="dn">D' + (i + 1) + ' · </span><b class="e">00:00</b>');
+    return { el: d, e: d.querySelector('.e'), pos: new THREE.Vector3(LX(i), 4.3, DOCK_Z + 1.2), scr: { on: false, x: 0, y: 0 } };
+  });
+  var fixedTags = [
+    { el: makeTag('fixed', 'SCAN'), pos: new THREE.Vector3(SCAN_X, 3.2, BELT_Z) },
+    { el: makeTag('fixed', 'REJECT'), pos: new THREE.Vector3(BELT_END + 2.6, 1.9, BELT_Z) },
+    { el: makeTag('fixed', '래핑'), pos: new THREE.Vector3(0, 2.0, WRAP_Z) }
+  ];
+  var vtmp = new THREE.Vector3(), W = 1, H = 1;
+  function placeTag(el, pos, scr) {
+    vtmp.copy(pos).project(camera);
+    if (vtmp.z > 1 || vtmp.x < -1.1 || vtmp.x > 1.1 || vtmp.y < -1.1 || vtmp.y > 1.1) { el.style.visibility = 'hidden'; if (scr) scr.on = false; return; }
+    var sx = (vtmp.x * 0.5 + 0.5) * W, sy = (-vtmp.y * 0.5 + 0.5) * H;
+    el.style.visibility = 'visible';
+    el.style.zIndex = String(1000 - Math.round(pos.distanceTo(camera.position) * 10));  // 가까운 라벨이 위로
+    el.style.transform = 'translate(' + sx.toFixed(1) + 'px,' + sy.toFixed(1) + 'px) translate(-50%,-100%)';
+    if (scr) { scr.on = true; scr.x = sx; scr.y = sy; }
+  }
+  function compactByNeighbors(tags, minDx, minDy) {
+    tags.forEach(function (t, i) {
+      var tight = t.scr.on && [tags[i - 1], tags[i + 1]].some(function (n) {
+        return n && n.scr.on && Math.abs(n.scr.x - t.scr.x) < minDx && Math.abs(n.scr.y - t.scr.y) < minDy;
+      });
+      t.el.classList.toggle('compact', tight);
+    });
+  }
+
+  /* ---------- 선택 센터 → 3D 반영 ---------- */
+  var vA = new THREE.Vector3(), vB = new THREE.Vector3();
+  function syncScene(c, time) {
+    for (var n = 0; n < parcelMeshes.length; n++) {
+      var p = c.parcels[n], m = parcelMeshes[n];
+      if (p.st === 'off') { m.visible = false; continue; }
+      m.visible = true;
+      m.material.color.setHex(p.read === false ? 0xd2584a : 0xc8965a);
+      if (p.st === 'belt') { m.position.set(p.x, BELT_Y + 0.2, BELT_Z); m.rotation.set(0, p.rotY, 0); }
+      else if (p.st === 'branch') {
+        vA.copy(brTop(p.lane)); vB.copy(brBot(p.lane));
+        m.position.lerpVectors(vA, vB, p.s / BR_LEN); m.position.y += 0.2; m.rotation.set(CHUTE_ANGLE, 0, 0);
+      } else if (p.st === 'reject') {
+        var tt = Math.min(1, p.t);
+        m.position.set(BELT_END + tt * 2.4, BELT_Y + 0.2 - tt * 0.9, BELT_Z); m.rotation.set(0, 0, -0.32 * tt);
+      }
+    }
+    rejectPile.count = Math.min(8, c.rjCount);
+    beamMat.opacity = 0.1 + c.scanFlash * 0.6; scanLight.intensity = c.scanFlash * 2.2;
+
+    c.lanes.forEach(function (l, i) {
+      var o = laneObjs[i];
+      o.unit.userData.inst.count = l.boxes;
+      var jam = l.backlog >= 6, st = jam ? 'jam' : l.status;
+      o.ring.material.color.setHex(jam ? 0xff6a5c : 0xf2b230);
+      o.ring.material.opacity = st === 'load' ? 0 : 0.45 + 0.35 * Math.sin(time * 6);
+      var tg = laneTags[i];
+      tg.el.dataset.s = st;
+      tg.p.textContent = Math.round(l.boxes / CAP * 100) + '%';
+      tg.s.textContent = jam ? '적체 +' + l.backlog : (l.status === 'wait' ? '집게차 대기' : c.L[i].name);
+      tg.pos.set(LX(i), 0.14 + 0.31 * Math.ceil(l.boxes / 9) + 0.7, PALLET_Z);
+    });
+    c.forks.forEach(function (f, i) {
+      var o = forkObjs[i];
+      o.g.position.set(f.x, 0, f.z); o.g.rotation.y = f.yaw;
+      o.carried.visible = f.carry; o.carried.userData.film.visible = f.film;
+    });
+    c.wrappers.forEach(function (w, i) {
+      var o = wrapObjs[i];
+      o.unit.visible = w.show; o.unit.userData.film.scale.y = w.film; o.spin.rotation.y = w.spin; o.roll.position.y = w.roll;
+    });
+    c.trucks.forEach(function (tr, i) {
+      var T = truckObjs[i];
+      T.rig.position.z = tr.z;
+      var depth = Math.max(0.001, tr.load * T.depth);
+      T.cargo.scale.z = depth; T.cargo.position.z = T.front - depth / 2; T.cargo.visible = tr.load > 0.005;
+    });
+  }
+
+  /* 카메라 */
+  var camTween = null;
+  document.querySelectorAll('[data-cam]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var cfg = CAMS[b.dataset.cam];
+      camTween = { t: 0, p0: camera.position.clone(), t0: controls.target.clone(), p1: new THREE.Vector3().fromArray(cfg.p), t1: new THREE.Vector3().fromArray(cfg.t) };
+      document.querySelectorAll('[data-cam]').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+    });
+  });
+
+  function resize() {
+    var r = stage.getBoundingClientRect(); W = r.width; H = r.height;
+    renderer.setSize(W, H, false); camera.aspect = W / H; camera.updateProjectionMatrix();
+  }
+  if (window.ResizeObserver) new ResizeObserver(resize).observe(stage); else window.addEventListener('resize', resize);
+  resize();
+
+  /* ---------- 루프: 모든 센터는 계속 돌고, 3D는 선택 센터만 그림 ---------- */
+  var last = performance.now(), panelAcc = 0, clockT = 0;
+  function frame(now) {
+    var raw = Math.min(0.1, (now - last) / 1000); last = now;
+    clockT += raw;
+    centers.forEach(function (c) { c.update(raw); });
+    if (cur.running) {
+      beltTex.offset.x -= raw * 2.6 * 1.5;
+      branchTexs.forEach(function (t) { t.offset.x -= raw * BR_V * 1.5; });
+    }
+    syncScene(cur, clockT);
+
+    if (camTween) {
+      camTween.t = Math.min(1, camTween.t + raw / 0.9);
+      var e = 1 - Math.pow(1 - camTween.t, 3);
+      camera.position.lerpVectors(camTween.p0, camTween.p1, e);
+      controls.target.lerpVectors(camTween.t0, camTween.t1, e);
+      if (camTween.t >= 1) camTween = null;
+    }
+    controls.update();
+    renderer.render(scene, camera);
+
+    laneTags.forEach(function (t) { placeTag(t.el, t.pos, t.scr); });
+    compactByNeighbors(laneTags, 160, 34);
+    dockTags.forEach(function (t, i) {
+      var tr = cur.trucks[i], st = cur.truckStatus(tr);
+      t.el.dataset.s = st.late ? 'late' : '';
+      t.e.textContent = tr.phase === 'docked' ? mmss(tr.eta) : st.t;
+      t.pos.z = DOCK_Z + 1.2 + tr.z;
+      placeTag(t.el, t.pos, t.scr);
+    });
+    compactByNeighbors(dockTags, 96, 30);
+    fixedTags.forEach(function (t) { placeTag(t.el, t.pos); });
+
+    panelAcc += raw;
+    if (panelAcc > 0.25) { panelAcc = 0; renderPanel(); }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+
+</body></html>
