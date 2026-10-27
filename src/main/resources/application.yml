@@ -5,7 +5,7 @@ spring:
     type: com.zaxxer.hikari.HikariDataSource
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
-    password: root
+    password: ${DB_PASSWORD:root}
     hikari:
       auto-commit: false
       pool-name: logistics_hub_cp
