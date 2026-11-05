@@ -1,0 +1,46 @@
+/*
+ * 디자인 토큰. 어두운 관제실 화면: 바닥(ground) 위에 패널(panel), 한 단 위(raise).
+ * 상태 색은 네 가지만 쓴다: 안전 노랑(집게차 대기·주의), 파랑(정보·적재중), 빨강(적체·마감), 초록(정상).
+ * 화면 코드는 색·글꼴을 직접 쓰지 않고 이 값만 쓴다.
+ */
+:root {
+  --ground: #0e131a;
+  --panel: #151c25;
+  --raise: #1b2430;
+  --line: #263242;
+  --line-hover: #3a4a5f;
+  --glass: rgba(14, 19, 26, 0.84);
+
+  --fg: #e6ecf3;
+  --muted: #93a2b5;
+
+  --safety: #f2b230;
+  --info: #5aa9ff;
+  --crit: #ff6a5c;
+  --ok: #3fd08f;
+  --on-safety: #1a1405;
+
+  --safety-soft: rgba(242, 178, 48, 0.14);
+  --crit-soft: rgba(255, 106, 92, 0.16);
+  --ok-soft: rgba(63, 208, 143, 0.14);
+  --muted-soft: rgba(147, 162, 181, 0.14);
+
+  --radius: 14px;
+  --radius-m: 12px;
+  --radius-s: 10px;
+
+  --sans: 'IBM Plex Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  color-scheme: dark;
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--fg);
+  background: var(--ground);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+}

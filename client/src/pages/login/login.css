@@ -1,0 +1,41 @@
+/* SCR-02 로그인·가입 */
+.login-wrap {
+  align-items: center;
+  padding-top: 8vh;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  gap: 14px;
+  padding: 24px;
+}
+
+.login-card h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.login-card .lead {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.login-card .help {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.login-card .switch {
+  align-self: center;
+  border-color: transparent;
+  color: var(--muted);
+}
+
+.form-notice {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ok);
+}

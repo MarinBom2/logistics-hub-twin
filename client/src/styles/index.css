@@ -1,0 +1,5 @@
+/* 공통 스타일 진입점. 순서가 곧 우선순위다: 토큰 → 기본 → 부품 → 화면 틀 */
+@import './tokens.css';
+@import './base.css';
+@import './components.css';
+@import './layout.css';

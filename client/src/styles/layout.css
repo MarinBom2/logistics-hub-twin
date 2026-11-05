@@ -1,0 +1,76 @@
+/* 화면 틀: 머리글과 본문 폭 */
+.wrap {
+  max-width: 1680px;
+  margin: 0 auto;
+  padding-block: 16px 28px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.app-header {
+  border-bottom: 1px solid var(--line);
+  background: var(--ground);
+}
+
+.app-header .inner {
+  max-width: 1680px;
+  margin: 0 auto;
+  min-height: 52px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--fg);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  min-width: 0;
+}
+
+.brand img {
+  width: 22px;
+  height: 22px;
+  flex: none;
+}
+
+.brand small {
+  font-family: var(--mono);
+  font-weight: 400;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--muted);
+  min-width: 0;
+}
+
+.who .email {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 220px;
+}
+
+@media (max-width: 640px) {
+  .brand small,
+  .who .email {
+    display: none;
+  }
+}

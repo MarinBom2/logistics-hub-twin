@@ -1,0 +1,139 @@
+/* 여러 화면이 같이 쓰는 부품: 버튼, 칩, 카드, 입력 */
+.btn {
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: var(--radius-s);
+  border: 1px solid var(--line);
+  background: var(--raise);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn.primary {
+  background: var(--safety);
+  border-color: var(--safety);
+  color: var(--on-safety);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.btn.ghost {
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: transparent;
+}
+
+.seg {
+  display: flex;
+  gap: 4px;
+}
+
+.seg button {
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--raise);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.seg button[aria-pressed='true'] {
+  background: var(--safety);
+  border-color: var(--safety);
+  color: var(--on-safety);
+}
+
+/* 상태 칩: 정상 · 주의 · 적체 · 정지 */
+.chip {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  color: var(--ok);
+  background: var(--ok-soft);
+}
+
+.chip.warn {
+  color: var(--safety);
+  background: var(--safety-soft);
+}
+
+.chip.crit {
+  color: var(--crit);
+  background: var(--crit-soft);
+}
+
+.chip.paused {
+  color: var(--muted);
+  background: var(--muted-soft);
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.card h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.card h2 span {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.field input {
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: var(--radius-s);
+  border: 1px solid var(--line);
+  background: var(--ground);
+  font-size: 14px;
+}
+
+.field input:focus {
+  border-color: var(--info);
+  outline: none;
+}
+
+.form-error {
+  margin: 0;
+  font-size: 13px;
+  color: var(--crit);
+}
+
+.page-loading {
+  min-height: 60vh;
+}
