@@ -1,0 +1,6 @@
+package com.marinbom2.logisticshubtwin.organization.domain;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface OrganizationRepository extends JpaRepository<Organization, Long> {
+}

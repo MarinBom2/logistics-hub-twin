@@ -1,0 +1,474 @@
+/* 데모 안내 띠 */
+.demo-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+  background: var(--panel);
+}
+
+.demo-banner p {
+  margin: 0;
+  flex: 1 1 320px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* SCR-01 관제 화면. 배치: 센터 네트워크 → 선택 센터 머리글·KPI → 3D 현장 옆 도크·이벤트 */
+
+/* 네트워크 */
+.network {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.net-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.net-head h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+
+.net-head h2 b {
+  color: var(--fg);
+  font-family: var(--mono);
+  font-weight: 600;
+}
+
+.regions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.regions button {
+  font-size: 12px;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  min-height: 32px;
+  padding: 0 12px;
+  cursor: pointer;
+}
+
+.regions button[aria-pressed='true'] {
+  color: var(--fg);
+  border-color: var(--fg);
+}
+
+.centers {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 10px;
+}
+
+.center {
+  text-align: left;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.center:hover {
+  border-color: var(--line-hover);
+}
+
+.center[aria-pressed='true'] {
+  border-color: var(--safety);
+  background: var(--raise);
+}
+
+.center .h {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.center .nm {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.center .nm b {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.center .nm span {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+}
+
+.center .st {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.center .st div {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.center .st span {
+  font-size: 10.5px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.center .st b {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.center .st b.bad {
+  color: var(--crit);
+}
+
+/* 선택 센터 머리글 */
+.top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+}
+
+.ident {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding-top: 10px;
+}
+
+.eyebrow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.top h1 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--sans);
+  letter-spacing: 0;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 999px;
+  color: var(--ok);
+  background: var(--ok-soft);
+}
+
+.pill::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.pill.paused {
+  color: var(--safety);
+  background: var(--safety-soft);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.clock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  padding-right: 6px;
+}
+
+.clock b {
+  font-family: var(--mono);
+  font-size: 26px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.clock span {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.ctl {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
+  padding: 6px 12px;
+  min-height: 44px;
+}
+
+.ctl label,
+.ctl .lbl {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.ctl input[type='range'] {
+  width: 130px;
+  accent-color: var(--safety);
+}
+
+.ctl output {
+  font-family: var(--mono);
+  font-size: 13px;
+  min-width: 62px;
+}
+
+/* KPI */
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+}
+
+.kpi {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.kpi .k {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.kpi .v {
+  font-family: var(--mono);
+  font-size: 28px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+}
+
+.kpi .v small {
+  font-size: 15px;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.kpi .s {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.kpi.alert .v {
+  color: var(--crit);
+}
+
+/* 3D 현장 + 오른쪽 레일 */
+.layout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: stretch;
+}
+
+.rail {
+  flex: 1 1 340px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.docks {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dock {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 70px;
+  gap: 10px;
+  align-items: center;
+  padding: 9px 10px;
+  border-radius: var(--radius-s);
+  background: var(--raise);
+  border: 1px solid var(--line);
+}
+
+.dock.late {
+  border-color: rgba(255, 106, 92, 0.7);
+}
+
+.dock .d {
+  font-family: var(--mono);
+  font-weight: 600;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.dock .mid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.dock .row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.dock .row span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dock .row span:last-child {
+  font-family: var(--mono);
+  color: var(--muted);
+}
+
+.bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--ground);
+  overflow: hidden;
+}
+
+.bar > div {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+
+.dock .eta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+}
+
+.dock .eta b {
+  font-family: var(--mono);
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.dock .eta span {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.dock.late .eta b {
+  color: var(--crit);
+}
+
+.log {
+  display: flex;
+  flex-direction: column;
+  max-height: 300px;
+  overflow: auto;
+}
+
+.log div {
+  display: grid;
+  grid-template-columns: 62px 8px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--raise);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.log time {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.log i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--info);
+}
+
+.log .warn i {
+  background: var(--safety);
+}
+
+.log .crit i {
+  background: var(--crit);
+}
+
+@media (max-width: 640px) {
+  .top h1 {
+    font-size: 22px;
+  }
+
+  .clock b {
+    font-size: 22px;
+  }
+}

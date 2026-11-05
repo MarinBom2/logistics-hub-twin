@@ -1,0 +1,503 @@
+/* SCR-00 영업 랜딩 */
+.landing {
+  --section-gap: 88px;
+}
+
+.landing h2 {
+  margin: 0;
+  font-size: clamp(24px, 3.2vw, 34px);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+.landing h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.landing p {
+  margin: 0;
+}
+
+.lead,
+.section-lead {
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.6;
+  max-width: 640px;
+}
+
+.text-link {
+  color: var(--info);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+/* 첫 화면 */
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 32px;
+  align-items: center;
+  padding-top: 48px;
+}
+
+.hero-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(34px, 4.6vw, 56px);
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+}
+
+.cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.hero-twin {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.stage.hero-stage {
+  flex: none;
+  height: clamp(340px, 52vh, 560px);
+}
+
+.hero-kpis {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.hero-kpis div {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
+  padding: 10px 12px;
+  min-width: 0;
+}
+
+.hero-kpis dt {
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.hero-kpis dd {
+  margin: 2px 0 0;
+  font-family: var(--mono);
+  font-size: 20px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.hero-kpis .alert dd {
+  color: var(--crit);
+}
+
+.hero-caption {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* 구역 공통 */
+.section {
+  padding-top: var(--section-gap);
+  gap: 20px;
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.card.plain p {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.principle {
+  margin: 8px 0 0;
+  padding: 18px 20px;
+  border-left: 3px solid var(--safety);
+  background: var(--panel);
+  border-radius: 0 var(--radius-s) var(--radius-s) 0;
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+.principle b {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+/* 제품 */
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.steps li {
+  display: flex;
+  gap: 14px;
+  padding: 16px 0;
+  border-top: 1px solid var(--line);
+}
+
+.steps .no {
+  font-family: var(--mono);
+  color: var(--safety);
+  font-weight: 600;
+}
+
+.steps p {
+  margin-top: 6px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.grid-cap {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.cap-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+/* 효과 계산 */
+.roi {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.roi h3 {
+  margin-bottom: 4px;
+}
+
+.roi-field .with-unit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.roi-field .with-unit input {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--mono);
+}
+
+.roi-field .with-unit span {
+  width: 24px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.roi details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+
+.roi details[open] > .roi-field + .roi-field,
+.roi details[open] > summary + .roi-field {
+  margin-top: 10px;
+}
+
+.roi summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.roi-result {
+  gap: 14px;
+  padding: 24px;
+}
+
+.roi-label {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.roi-big {
+  font-family: var(--mono);
+  font-size: clamp(32px, 4vw, 48px);
+  font-weight: 600;
+  color: var(--ok);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.roi-sub {
+  font-family: var(--mono);
+  color: var(--muted);
+}
+
+.roi-split {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.roi-split > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.roi-split b {
+  font-family: var(--mono);
+  color: var(--fg);
+}
+
+.roi-bars {
+  display: flex;
+  height: 10px;
+  border-radius: 5px;
+  overflow: hidden;
+  background: var(--ground);
+}
+
+.roi-bars i {
+  display: block;
+  height: 100%;
+  transition: width 0.3s;
+}
+
+.roi-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.roi-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+}
+
+.roi-legend i {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+}
+
+.roi-compare {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.roi-compare div {
+  background: var(--raise);
+  border-radius: var(--radius-s);
+  padding: 10px 12px;
+}
+
+.roi-compare dt {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.roi-compare dd {
+  margin: 4px 0 0;
+  font-family: var(--mono);
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.roi-compare .pos {
+  color: var(--ok);
+}
+
+.roi-compare .neg {
+  color: var(--crit);
+}
+
+.roi-note {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+/* 도입 방식 */
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+}
+
+.timeline li {
+  padding: 18px 18px 18px 0;
+  border-top: 3px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.timeline li:last-child {
+  border-top-color: var(--safety);
+}
+
+.timeline .weeks {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--safety);
+}
+
+.timeline p {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+/* 가격 */
+.plan {
+  gap: 12px;
+  padding: 22px;
+}
+
+.plan.featured {
+  border-color: var(--safety);
+  background: var(--raise);
+}
+
+.plan .price {
+  font-family: var(--mono);
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.plan .unit {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.plan ul {
+  margin: 4px 0 8px;
+  padding-left: 18px;
+  color: var(--muted);
+  line-height: 1.8;
+  flex: 1;
+}
+
+/* 문의 */
+.contact {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.contact > div {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.lead-form {
+  gap: 14px;
+  padding: 22px;
+}
+
+.lead-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.lead-done {
+  gap: 12px;
+  padding: 22px;
+}
+
+.lead-done p {
+  color: var(--muted);
+}
+
+.landing-footer {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  margin-top: var(--section-gap);
+  padding-block: 24px 40px;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+@media (max-width: 960px) {
+  .hero,
+  .roi,
+  .contact {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .grid-3,
+  .steps,
+  .timeline {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .landing {
+    --section-gap: 64px;
+  }
+}
+
+@media (max-width: 640px) {
+  .hero-kpis,
+  .roi-compare,
+  .lead-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .lead-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hero {
+    padding-top: 28px;
+  }
+}

@@ -1,0 +1,242 @@
+/* 여러 화면이 같이 쓰는 부품: 버튼, 칩, 카드, 입력 */
+.btn {
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: var(--radius-s);
+  border: 1px solid var(--line);
+  background: var(--raise);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn.primary {
+  background: var(--safety);
+  border-color: var(--safety);
+  color: var(--on-safety);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-decoration: none;
+  color: var(--fg);
+}
+
+.btn.primary.small {
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: 8px;
+}
+
+.btn.large {
+  min-height: 52px;
+  padding: 0 24px;
+  font-size: 15px;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.btn.ghost {
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: transparent;
+}
+
+.seg {
+  display: flex;
+  gap: 4px;
+}
+
+.seg button {
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--raise);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.seg button[aria-pressed='true'] {
+  background: var(--safety);
+  border-color: var(--safety);
+  color: var(--on-safety);
+}
+
+/* 상태 칩: 정상 · 주의 · 적체 · 정지 */
+.chip {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  color: var(--ok);
+  background: var(--ok-soft);
+}
+
+.chip.warn {
+  color: var(--safety);
+  background: var(--safety-soft);
+}
+
+.chip.crit {
+  color: var(--crit);
+  background: var(--crit-soft);
+}
+
+.chip.paused {
+  color: var(--muted);
+  background: var(--muted-soft);
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.card h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.card h2 span {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.field input {
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: var(--radius-s);
+  border: 1px solid var(--line);
+  background: var(--ground);
+  font-size: 14px;
+}
+
+.field input:focus {
+  border-color: var(--info);
+  outline: none;
+}
+
+.form-error {
+  margin: 0;
+  font-size: 13px;
+  color: var(--crit);
+}
+
+.page-loading {
+  min-height: 60vh;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.badge.live {
+  color: var(--ok);
+  border-color: rgba(63, 208, 143, 0.4);
+}
+
+.badge.soon {
+  color: var(--safety);
+  border-color: rgba(242, 178, 48, 0.4);
+}
+
+.field select,
+.field textarea {
+  border-radius: var(--radius-s);
+  border: 1px solid var(--line);
+  background: var(--ground);
+  font: inherit;
+  font-size: 14px;
+  color: inherit;
+  padding: 10px 12px;
+}
+
+.field select {
+  min-height: 44px;
+}
+
+.field textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.check {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.check input {
+  margin-top: 3px;
+  accent-color: var(--safety);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--raise);
+}
+
+.table th {
+  font-weight: 500;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* 구역 머리 위 작은 제목 (랜딩·워크스페이스) */
+.eyebrow-text {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--safety);
+}

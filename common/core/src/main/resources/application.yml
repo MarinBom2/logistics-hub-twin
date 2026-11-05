@@ -1,0 +1,107 @@
+# server·batch 가 같이 쓰는 설정. 모듈마다 다른 값은 main 클래스의 setDefaultProperties 로 넣는다 (md/develop-principal.md §5)
+# 비밀 값은 여기 적지 않는다. 로컬은 루트 secrets/application-secret.yml, 운영은 환경변수 (md/develop-principal.md §6)
+server:
+  port: ${SERVER_PORT:9090}
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+  tomcat:
+    uri-encoding: UTF-8
+spring:
+  config:
+    # 로컬 비밀 값(루트 secrets/, bootRun 클래스패스에만 있음). 운영은 환경변수
+    import: optional:classpath:application-secret.yml
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    # 로컬 기본값은 docker-compose 의 MySQL. 운영은 application-prod.yml 이 기본값 없이 환경변수로만 받는다
+    url: ${DB_URL:jdbc:mysql://localhost:3306/logistics_hub?createDatabaseIfNotExist=true&connectionCollation=utf8mb4_general_ci}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+    hikari:
+      auto-commit: false
+      pool-name: logistics_hub_cp
+      connection-timeout: 3000
+      idle-timeout: 300000
+      max-lifetime: 50000
+      maximum-pool-size: 10
+  jpa:
+    # 트랜잭션이 끝나면 영속성 컨텍스트를 닫는다 (뷰 렌더링 중 지연 로딩 쿼리 금지)
+    open-in-view: false
+    properties:
+      hibernate:
+        # enum 칼럼에 CHECK 제약을 만들지 않는다 (ddl update 가 고치지 않아 enum 값을 추가하면 저장이 막힌다)
+        dialect: com.marinbom2.logisticshubtwin.config.NoColumnCheckMySQLDialect
+
+logging:
+  level:
+    root: INFO
+    org.springframework.security: INFO
+
+security:
+  # 개발 편의 기능. 기본은 모두 꺼짐이고 local 프로필 아래에서만 켠다 (MemberSecurityProperties)
+  login-bypass:
+    emails: []
+  role:
+    self-change-allowed: false
+
+jwt:
+  # HS256 서명 키. 최소 32바이트여야 하고, 비워두면 기동할 때마다 임시 키를 만든다
+  # (재기동하면 발급된 토큰이 전부 무효가 되고, 인스턴스가 여러 개면 서로 검증하지 못한다. prod 에서는 기동 실패)
+  secret: ${JWT_SECRET:}
+  access-token-ttl: 12h
+  # 액세스 토큰은 HttpOnly 쿠키로만 내려간다. 응답 본문에는 없다
+  cookie:
+    name: lht_at
+    secure: true        # HTTPS 전용. local 프로필이 false 로 덮는다
+    same-site: Lax      # 다른 사이트에서 시작된 POST 에는 쿠키가 실리지 않는다 (CSRF 방어)
+    path: /
+    domain:             # 비우면 응답한 호스트에만 붙는다
+
+pricing:
+  # 허브 요금제의 허브당 월 구독료 (원, 부가세 별도). 사업 가설이다 (md/business-plan.md §6)
+  hub-monthly-fee: 2900000
+
+# API 문서 (OpenApiConfig). 로컬: /swagger-ui.html. 운영은 application-prod.yml 에서 끈다
+springdoc:
+  paths-to-match: /api/**
+  default-produces-media-type: application/json
+  swagger-ui:
+    operations-sorter: alpha
+    tags-sorter: alpha
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+      show-components: never
+
+---
+# 로컬 프로필 (bootRun 기본값). 비밀 값이 아닌 개발 편의 값만 둔다
+spring:
+  config:
+    activate:
+      on-profile: local
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: false
+
+security:
+  role:
+    # PATCH /api/v1/me/role 로 내 권한을 바꿔 운영자 화면을 확인한다
+    self-change-allowed: true
+
+jwt:
+  cookie:
+    # 로컬은 http 라 Secure 쿠키를 쓸 수 없다 (md/runtime-structure.md §4)
+    secure: false
