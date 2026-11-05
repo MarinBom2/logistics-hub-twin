@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.marinbom2.logisticshubtwin.member.domain.Member;
+import com.marinbom2.logisticshubtwin.member.domain.RoleType;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.security.WeakKeyException;
@@ -71,7 +72,7 @@ class JwtTokenProviderTest {
     }
 
     private static Member member(long id) {
-        Member member = Member.signUp("m" + id + "@example.com", "{bcrypt}hash");
+        Member member = Member.create(1L, "m" + id + "@example.com", "{bcrypt}hash", RoleType.VIEWER);
         ReflectionTestUtils.setField(member, "id", id);
         return member;
     }

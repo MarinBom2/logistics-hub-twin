@@ -22,6 +22,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 /**
  * 회원이자 인증 주체(UserDetails). 로그인 ID 는 이메일, 권한은 RoleType 이름.
+ * 회원은 고객사(Organization) 하나에 속하고, 그 고객사의 데이터만 본다.
  * 비밀번호 해시가 있어 API 응답으로 직접 내보내지 않는다.
  */
 @Getter
@@ -33,6 +34,10 @@ public class Member extends BaseEntity implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    /** 소속 고객사. 모든 조회의 테넌트 키다 */
+    @Column(name = "organization_id", nullable = false)
+    private Long organizationId;
 
     @Column(nullable = false, length = 100)
     private String email;
@@ -50,15 +55,16 @@ public class Member extends BaseEntity implements UserDetails {
     private int tokenVersion;
 
     /**
-     * 가입. 처음에는 조회 권한만 준다. 운영자 권한은 관리자가 올린다.
+     * 회원 만들기. 워크스페이스를 만든 사람은 ADMIN, 관리자가 발급한 팀원은 고른 권한으로 시작한다.
      *
      * @param encodedPassword PasswordEncoder 로 만든 해시
      */
-    public static Member signUp(String email, String encodedPassword) {
+    public static Member create(Long organizationId, String email, String encodedPassword, RoleType roleType) {
         Member member = new Member();
+        member.organizationId = organizationId;
         member.email = normalizeEmail(email);
         member.password = encodedPassword;
-        member.roleType = RoleType.VIEWER;
+        member.roleType = roleType;
         member.tokenVersion = 0;
         return member;
     }

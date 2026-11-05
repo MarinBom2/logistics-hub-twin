@@ -60,6 +60,10 @@ jwt:
     path: /
     domain:             # 비우면 응답한 호스트에만 붙는다
 
+pricing:
+  # 허브 요금제의 허브당 월 구독료 (원, 부가세 별도). 사업 가설이다 (md/business-plan.md §6)
+  hub-monthly-fee: 2900000
+
 # API 문서 (OpenApiConfig). 로컬: /swagger-ui.html. 운영은 application-prod.yml 에서 끈다
 springdoc:
   paths-to-match: /api/**

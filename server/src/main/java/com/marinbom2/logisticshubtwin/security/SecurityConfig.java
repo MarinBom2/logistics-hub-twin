@@ -37,18 +37,26 @@ import tools.jackson.databind.json.JsonMapper;
 @EnableConfigurationProperties(MemberSecurityProperties.class)
 public class SecurityConfig {
 
-    /** 인증 없이 부르는 POST 경로. 로그아웃은 토큰이 만료돼도 쿠키를 지울 수 있게 연다 */
+    /**
+     * 인증 없이 부르는 POST 경로. 로그아웃은 토큰이 만료돼도 쿠키를 지울 수 있게 연다.
+     * 투자 효과 계산기·도입 문의는 랜딩 페이지(SCR-00)가 부른다
+     */
     static final String[] PERMIT_ALL_POST = {
             "/api/v1/auth/signup",
             MemberAuthenticationAPIFilter.LOGIN_PATH,
             "/api/v1/auth/logout",
+            "/api/v1/roi/estimates",
+            "/api/v1/leads",
     };
-
-    /** 관제 조회(센터 목록·스냅샷·알람)는 로그인 없이 본다 (md/logistics-hub-twin.md §8) */
-    static final String CENTER_READ_PATTERN = "/api/v1/centers/**";
 
     /** 제어 명령(유입량·집게차 대수)은 운영자 이상만. 권한 이름은 RoleType 이름 그대로 (ROLE_ 접두사 없음) */
     static final String CENTER_CONTROL_PATTERN = "/api/v1/centers/*/control";
+
+    /** 팀원 관리는 고객사 관리자만 */
+    static final String TEAM_PATTERN = "/api/v1/organization/members/**";
+
+    /** 센터 등록은 고객사 관리자만. 목록은 같은 고객사 회원 누구나 */
+    static final String CENTERS_PATH = "/api/v1/centers";
 
     @Bean
     public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http,
@@ -80,7 +88,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, PERMIT_ALL_POST).permitAll()
                         .requestMatchers(CENTER_CONTROL_PATTERN).hasAnyAuthority("OPERATOR", "ADMIN")
-                        .requestMatchers(HttpMethod.GET, CENTER_READ_PATTERN).permitAll()
+                        .requestMatchers(TEAM_PATTERN).hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.POST, CENTERS_PATH).hasAuthority("ADMIN")
+                        // 고객사 데이터는 모두 로그인이 필요하다. 다른 고객사 데이터는 서비스가 고객사 ID 로 걸러 낸다
                         .anyRequest().authenticated())
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, accessTokenCookie, memberRepository),
                         UsernamePasswordAuthenticationFilter.class)

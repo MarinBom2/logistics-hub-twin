@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * SCR-02: 가입·로그아웃. 로그인(POST /api/v1/auth/login)은 시큐리티 필터 MemberAuthenticationAPIFilter 가 처리한다.
+ * SCR-02: 가입(워크스페이스 만들기)·로그아웃. 로그인(POST /api/v1/auth/login)은 시큐리티 필터 MemberAuthenticationAPIFilter 가 처리한다.
  */
 @Tag(name = "인증", description = "가입, 로그인, 로그아웃 (SCR-02)")
 @RestController
@@ -34,14 +34,14 @@ public class AuthController {
     private final MemberService memberService;
     private final AccessTokenCookie accessTokenCookie;
 
-    @Operation(summary = "가입",
-            description = "FR-AU-001. 이메일과 비밀번호로 조회 권한(VIEWER) 회원을 만든다. 가입 뒤 로그인은 따로 한다")
+    @Operation(summary = "가입 (워크스페이스 만들기)",
+            description = "FR-AU-001. 회사명으로 고객사 워크스페이스(8주 파일럿)를 만들고, 가입한 사람을 관리자(ADMIN)로 둔다. 가입 뒤 로그인은 따로 한다")
     @ApiResponse(responseCode = "409", description = "ALREADY_EXIST",
             content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @PostMapping("/signup")
     @ResponseStatus(HttpStatus.CREATED)
     public MemberResponse signUp(@Valid @RequestBody MemberSignupRequest request) {
-        return MemberResponse.from(memberService.signUp(request));
+        return MemberResponse.from(memberService.signUp(request.organizationName(), request.email(), request.password()));
     }
 
     @Operation(summary = "로그아웃",

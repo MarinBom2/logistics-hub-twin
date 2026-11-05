@@ -31,7 +31,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.mysql.MySQLContainer;
 
 /**
- * 실제 필터 체인으로 가입 → 로그인 → 인증 → 권한 → 로그아웃 (FR-AU-001~003, md/authentication-security.md 11절).
+ * 실제 필터 체인으로 가입 → 로그인 → 인증 → 권한 → 로그아웃 (FR-AU-001~003, md/authentication-security.md 12절).
  * MySQL 을 Testcontainers 로 띄운다. Docker 데몬이 없으면 건너뛴다.
  */
 @SpringBootTest(properties = {
@@ -57,14 +57,15 @@ class AuthFlowTest {
     FilterChainProxy filterChainProxy;
 
     @Test
-    @DisplayName("가입(VIEWER) → 로그인(HttpOnly·SameSite=Lax 쿠키) → 쿠키로 내 정보")
+    @DisplayName("가입 = 워크스페이스(파일럿) + 관리자 → 로그인(HttpOnly·SameSite=Lax 쿠키) → 내 정보·워크스페이스")
     void signupLoginMe() throws Exception {
         String email = newEmail();
 
         mockMvc.perform(signup(email, PASSWORD))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.email").value(email))
-                .andExpect(jsonPath("$.roleType.code").value("VIEWER"))
+                .andExpect(jsonPath("$.roleType.code").value("ADMIN"))
+                .andExpect(jsonPath("$.organizationId").isNumber())
                 .andExpect(jsonPath("$.password").doesNotExist());
 
         MvcResult login = mockMvc.perform(login(email, PASSWORD))
@@ -79,6 +80,11 @@ class AuthFlowTest {
         mockMvc.perform(get("/api/v1/me").cookie(cookie))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value(email));
+        mockMvc.perform(get("/api/v1/organization").cookie(cookie))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("테스트물류"))
+                .andExpect(jsonPath("$.planType.code").value("PILOT"))
+                .andExpect(jsonPath("$.pilotEndsAt").isNotEmpty());
     }
 
     @Test
@@ -99,6 +105,90 @@ class AuthFlowTest {
         mockMvc.perform(signup(newEmail(), "onlyletters"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("INVALID_REQUEST_DATA"));
+    }
+
+    @Test
+    @DisplayName("고객사 분리: 다른 고객사의 센터는 목록에 없고, 같은 코드도 각자 등록할 수 있다")
+    void tenantIsolation() throws Exception {
+        Cookie companyA = workspaceAdmin();
+        Cookie companyB = workspaceAdmin();
+
+        mockMvc.perform(registerCenter(companyA, "hub-y3"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.code").value("HUB-Y3"));
+        mockMvc.perform(registerCenter(companyA, "HUB-Y3"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("ALREADY_EXIST"));
+
+        mockMvc.perform(get("/api/v1/centers").cookie(companyB))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+        mockMvc.perform(registerCenter(companyB, "HUB-Y3")).andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/v1/centers").cookie(companyA))
+                .andExpect(jsonPath("$.length()").value(1));
+        mockMvc.perform(get("/api/v1/centers"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("팀원: 관리자가 VIEWER·OPERATOR 를 발급, VIEWER 는 센터 등록·팀원 관리 403, 제어는 OPERATOR 부터 인가")
+    void teamRoles() throws Exception {
+        Cookie admin = workspaceAdmin();
+        String viewerEmail = newEmail();
+        String operatorEmail = newEmail();
+
+        mockMvc.perform(addMember(admin, viewerEmail, "VIEWER"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.roleType.code").value("VIEWER"));
+        mockMvc.perform(addMember(admin, operatorEmail, "OPERATOR")).andExpect(status().isCreated());
+        mockMvc.perform(get("/api/v1/organization/members").cookie(admin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(3));
+
+        Cookie viewer = loginCookie(viewerEmail);
+        mockMvc.perform(registerCenter(viewer, "HUB-Z1"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
+        mockMvc.perform(get("/api/v1/organization/members").cookie(viewer)).andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/v1/centers").cookie(viewer)).andExpect(status().isOk());
+        mockMvc.perform(control(viewer)).andExpect(status().isForbidden());
+
+        // 제어 API 는 M7 에서 생긴다. 지금은 인가만 통과하면 된다
+        int status = mockMvc.perform(control(loginCookie(operatorEmail))).andReturn().getResponse().getStatus();
+        assertThat(status).isNotIn(401, 403);
+    }
+
+    @Test
+    @DisplayName("local 설정이면 내 권한 바꾸기: 권한은 DB 값이라 같은 쿠키로 바로 반영된다")
+    void selfRoleChange() throws Exception {
+        Cookie admin = workspaceAdmin();
+        mockMvc.perform(patch("/api/v1/me/role").cookie(admin)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"roleType\":\"VIEWER\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.roleType.code").value("VIEWER"));
+        mockMvc.perform(registerCenter(admin, "HUB-Q1")).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("랜딩 API 는 로그인 없이: 투자 효과 추정 200, 도입 문의 201 / 동의 없으면 400")
+    void publicSalesApis() throws Exception {
+        mockMvc.perform(post("/api/v1/roi/estimates").contentType(MediaType.APPLICATION_JSON).content("""
+                        {"hubCount":1,"departuresPerHubPerDay":60,"operatingDaysPerMonth":26,"lowLoadDeparturePercent":20,
+                         "lowLoadAverageLoadPercent":70,"targetLoadPercent":90,"tripCostWon":400000,"jamMinutesPerHubPerDay":30,
+                         "crewPerHub":20,"hourlyWageWon":15000,"improvementPercent":30}
+                        """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.monthlySavingWon").value(8_658_000))
+                .andExpect(jsonPath("$.monthlyFeeWon").value(2_900_000));
+
+        mockMvc.perform(post("/api/v1/leads").contentType(MediaType.APPLICATION_JSON).content(lead(true)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.leadId").isNumber())
+                .andExpect(jsonPath("$.email").doesNotExist());
+        mockMvc.perform(post("/api/v1/leads").contentType(MediaType.APPLICATION_JSON).content(lead(false)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].field").value("agreePrivacy"));
     }
 
     @Test
@@ -130,32 +220,6 @@ class AuthFlowTest {
         mockMvc.perform(get("/api/v1/me").cookie(new Cookie(COOKIE, "not.a.jwt")))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("INVALID_ACCESS_TOKEN"));
-    }
-
-    @Test
-    @DisplayName("관제 조회는 로그인 없이 인가 통과, 제어는 VIEWER 403 → OPERATOR 로 바꾸면 인가 통과")
-    void centerAuthorization() throws Exception {
-        // 센터 API 는 M3 에서 생긴다. 지금은 컨트롤러가 없어 404 면 인가는 통과한 것
-        mockMvc.perform(get("/api/v1/centers"))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.code").value("NOT_FOUND"));
-
-        String email = newEmail();
-        mockMvc.perform(signup(email, PASSWORD)).andExpect(status().isCreated());
-        Cookie cookie = loginCookie(email);
-
-        mockMvc.perform(control(cookie))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
-
-        mockMvc.perform(patch("/api/v1/me/role").cookie(cookie)
-                        .contentType(MediaType.APPLICATION_JSON).content("{\"roleType\":\"OPERATOR\"}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.roleType.code").value("OPERATOR"));
-
-        // 권한은 토큰이 아니라 DB 값이라 같은 쿠키로 바로 반영된다
-        int status = mockMvc.perform(control(cookie)).andReturn().getResponse().getStatus();
-        assertThat(status).isNotIn(401, 403);
     }
 
     @Test
@@ -212,9 +276,33 @@ class AuthFlowTest {
                 .contentType(MediaType.APPLICATION_JSON).content("{\"inflowLevel\":3}");
     }
 
+    /** 새 워크스페이스를 만들고 그 관리자로 로그인한 쿠키 */
+    private Cookie workspaceAdmin() throws Exception {
+        String email = newEmail();
+        mockMvc.perform(signup(email, PASSWORD)).andExpect(status().isCreated());
+        return loginCookie(email);
+    }
+
     private static RequestBuilder signup(String email, String password) {
         return post("/api/v1/auth/signup").contentType(MediaType.APPLICATION_JSON)
-                .content("{\"email\":\"%s\",\"password\":\"%s\"}".formatted(email, password));
+                .content("{\"organizationName\":\"테스트물류\",\"email\":\"%s\",\"password\":\"%s\"}".formatted(email, password));
+    }
+
+    private static RequestBuilder registerCenter(Cookie cookie, String code) {
+        return post("/api/v1/centers").cookie(cookie).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"code\":\"%s\",\"name\":\"용인 3센터\",\"region\":\"경기 남부\"}".formatted(code));
+    }
+
+    private static RequestBuilder addMember(Cookie cookie, String email, String role) {
+        return post("/api/v1/organization/members").cookie(cookie).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"email\":\"%s\",\"password\":\"%s\",\"roleType\":\"%s\"}".formatted(email, PASSWORD, role));
+    }
+
+    private static String lead(boolean agree) {
+        return """
+                {"companyName":"테스트물류","contactName":"홍길동","email":"ops@example.com","hubCount":3,
+                 "message":"저적재 출발을 줄이고 싶습니다.","agreePrivacy":%s}
+                """.formatted(agree);
     }
 
     private static RequestBuilder login(String email, String password) {

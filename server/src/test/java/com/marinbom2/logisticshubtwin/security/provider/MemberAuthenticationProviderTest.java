@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.marinbom2.logisticshubtwin.member.domain.Member;
+import com.marinbom2.logisticshubtwin.member.domain.RoleType;
 import com.marinbom2.logisticshubtwin.security.token.MemberAuthenticationToken;
 import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
@@ -22,7 +23,7 @@ class MemberAuthenticationProviderTest {
     private static final String PASSWORD = "Passw0rd!";
 
     private final PasswordEncoder passwordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
-    private final Member member = Member.signUp(EMAIL, passwordEncoder.encode(PASSWORD));
+    private final Member member = Member.create(1L, EMAIL, passwordEncoder.encode(PASSWORD), RoleType.VIEWER);
     private final UserDetailsService detailsService = email -> {
         if (EMAIL.equals(email)) {
             return member;
