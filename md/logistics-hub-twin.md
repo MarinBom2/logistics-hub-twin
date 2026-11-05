@@ -124,13 +124,19 @@ Milo OPC UA 서버   ─OPC UA 구독─>  Milo 클라이언트   ─MQTT─>  M
 
 ```
 logistics-hub-twin/
-├── plc-sim/          # 가상 PLC — Milo OPC UA 서버 + 허브 시뮬레이터
-├── edge-collector/   # Milo OPC UA 클라이언트 → MQTT 발행
-├── server/           # Spring Boot 4.1.2 — 수집 소비, 상태, 이력, WebSocket, LLM 분석
-├── client/           # React + React Three Fiber
-├── docker/           # docker-compose (RabbitMQ + MQTT, Redis, MySQL)
-└── docs/             # 이벤트 정의, 토픽 설계, 화면 캡처
+├── common/core/      # 도메인(member, 이후 center·event)·공통 설정(yml) — server·batch 가 같이 쓴다
+├── server/           # Spring Boot 4.1.2 — API·보안(JWT), 이후 수집 소비·상태·이력·WebSocket·LLM 분석
+├── batch/            # 이력 보관 정리·시간대별 KPI 집계 배치
+├── client/           # React + React Three Fiber (빌드 결과는 server.jar 에 담긴다)
+├── plc-sim/          # (M1) 가상 PLC — Milo OPC UA 서버 + 허브 시뮬레이터
+├── edge-collector/   # (M2) Milo OPC UA 클라이언트 → MQTT 발행
+├── docker-compose.yml  # MySQL (이후 RabbitMQ + MQTT, Redis)
+└── md/               # 기획서, 개발 규약, 설계 문서
 ```
+
+- 모듈 구조와 경계 규칙: [develop-principal.md](./develop-principal.md) §5
+- 실행·빌드(포트 9090/9091, 화면을 jar 에 담는 방식): [runtime-structure.md](./runtime-structure.md)
+- 인증·인가: [authentication-security.md](./authentication-security.md)
 
 ### 기술 스택
 
@@ -280,13 +286,16 @@ MQTT 메시지는 `amq.topic` exchange로 들어오고 `/`는 `.`으로 바뀐�
 
 ### REST
 
+경로 규칙은 [develop-principal.md](./develop-principal.md) §8 (`/api/v1` 접두사).
+
+
 | 메서드 | 경로 | 설명 |
 |---|---|---|
-| GET | `/api/centers` | 센터 목록 + 요약 KPI |
-| GET | `/api/centers/{centerId}/snapshot` | 화면 첫 진입용 현재 상태 |
-| GET | `/api/centers/{centerId}/alarms` | 알람 이력 |
-| PUT | `/api/centers/{centerId}/control` | 유입량 · 집게차 대수 변경 (JWT 필요, 감사 기록) |
-| POST | `/api/analysis/ask` | LLM 분석 질의 |
+| GET | `/api/v1/centers` | 센터 목록 + 요약 KPI |
+| GET | `/api/v1/centers/{centerId}/snapshot` | 화면 첫 진입용 현재 상태 |
+| GET | `/api/v1/centers/{centerId}/alarms` | 알람 이력 |
+| PUT | `/api/v1/centers/{centerId}/control` | 유입량 · 집게차 대수 변경 (OPERATOR 이상, 감사 기록) |
+| POST | `/api/v1/analysis/ask` | LLM 분석 질의 |
 
 ### WebSocket (STOMP)
 
