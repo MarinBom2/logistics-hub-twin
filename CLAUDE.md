@@ -12,6 +12,7 @@
 | [md/solid.md](md/solid.md) | SOLID 적용 기준 |
 | [md/authentication-security.md](md/authentication-security.md) | 로그인·JWT 쿠키·권한 |
 | [md/runtime-structure.md](md/runtime-structure.md) | 실행·빌드 (9090 서버, 9091 Vite, jar 하나에 화면 포함) |
+| [md/todo.md](md/todo.md) | 할 일과 진행 방법: 순서, 항목별 접근 방법과 끝 기준 |
 
 ## Claude 가 지킬 것
 
