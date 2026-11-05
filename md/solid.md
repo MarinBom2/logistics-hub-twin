@@ -26,6 +26,9 @@
 | 이벤트 이력 저장 + `eventId` 유니크 판정 (`EventHistoryRepository` 구현체 하나) | 수신(`ingest/rabbit`) · 상태 갱신(`state`) · 실시간 푸시(`realtime`) |
 | 파레트 적재 수 + 만재 → 집게차 대기 전환 (`Center`/`Lane` 도메인) | KPI 계산(`kpi`) · 알람 판정 |
 | 회원 토큰 버전 + 무효화 (`Member.invalidateTokens`) | 토큰 서명·검증(`JwtTokenProvider`) · 쿠키 입출력(`AccessTokenCookie`) |
+| 가입 = 고객사 + 첫 관리자 (`MemberService.signUp`, 한 트랜잭션) | 워크스페이스 조회(`OrganizationService`) |
+| 비밀번호 규칙 + 이메일 중복 (`MemberService.create`, 가입·팀원 발급 공용) | |
+| 투자 효과 계산식 전체 (`RoiEstimator`) | 요금 값(`PricingProperties`, 설정) · 화면 기본값(가정) |
 
 이미 지키는 예
 

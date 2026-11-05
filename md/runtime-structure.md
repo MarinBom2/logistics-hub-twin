@@ -29,10 +29,11 @@ Windows 는 `.\gradlew.bat :server:bootRun`. 브라우저는 `http://localhost:9
 ### B. 서버 없이 화면만
 
 ```bash
-cd client && npm run dev:mock        # 인증은 localStorage 가짜 API (operator@example.com / Passw0rd!)
+cd client && npm run dev:mock        # 인증·워크스페이스·계산기·문의가 localStorage 가짜 API
+                                     # 관리자 admin@example.com / Passw0rd!, 운영자 operator@example.com / Passw0rd!
 ```
 
-관제 데이터는 지금 서버 연결과 무관하게 브라우저 안 시뮬레이션(`features/twin/sim`)이 만든다. 서버 실시간 채널(M4)이 붙으면 A 방식에서만 실제 데이터가 보인다.
+데모 관제 데이터는 서버 연결과 무관하게 브라우저 안 시뮬레이션(`features/twin/sim`)이 만든다. mock 의 효과 계산은 서버 `RoiEstimator`와 같은 식의 사본이다. 식을 바꾸면 서버를 먼저 고치고 사본을 맞춘다.
 
 ### C. 로컬 통합 확인 / 운영
 
@@ -92,7 +93,7 @@ java -jar server/build/libs/server.jar --spring.profiles.active=prod
 | 상황 | 문제 | 대응 |
 |---|---|---|
 | Vite dev 서버를 띄운 채 `-PwithClient`나 `bootJar` | 윈도우에서 npmInstall 이 Vite 가 잡은 파일을 못 지워 EPERM | dev 서버를 끄고 돌린다 |
-| 화면 경로를 새로고침 | `/centers/y3`를 서버가 모르면 404 | `SpaForwardController`가 화면 경로만 `index.html`로 돌린다. `/api/**`, `/assets/**`, 확장자 있는 경로는 넣지 않는다 |
+| 화면 경로를 새로고침 | `/demo/centers/y3`, `/workspace`를 서버가 모르면 404 | `SpaForwardController`가 화면 경로만 `index.html`로 돌린다. `/api/**`, `/assets/**`, 확장자 있는 경로는 넣지 않는다 |
 | 배포 직후 열려 있던 화면 | 이전 해시의 JS 청크가 없어 화면 이동 실패 | `vite:preloadError`에서 새로고침 (`main.tsx`) |
 | A 방식에서 서버가 꺼져 있음 | `/api` 요청이 Vite 에서 502 | 관제 화면은 그대로 동작하고 로그인 상태만 "로그인 전"으로 보인다 |
 | WebGL 을 못 쓰는 브라우저 | 3D 가 안 뜸 | Canvas `fallback` + 오류 경계로 안내 문구를 띄우고 숫자 패널은 계속 갱신 |

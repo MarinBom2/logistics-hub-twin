@@ -91,10 +91,17 @@ export interface CodeLabel<C extends string = string> {
 | `FR-AU-001` | 가입 | `AuthController.signUp`, `MemberService.signUp` |
 | `FR-AU-002` | 로그인·로그아웃·세션 확인 | 로그인 필터, `AuthController.logout`, `MeController.me` |
 | `FR-AU-003` | 권한 (VIEWER · OPERATOR · ADMIN) | `SecurityConfig`, `MeController.changeRole` |
-| `SCR-01` | 관제 화면 (네트워크·KPI·3D·도크·이벤트) | `client/src/routes.ts` `SCR01_DASHBOARD` |
-| `SCR-02` | 로그인·가입 | `client/src/routes.ts` `SCR02_LOGIN` |
+| `FR-OR-001` | 내 워크스페이스 조회 | `OrganizationController.get` |
+| `FR-OR-002` | 팀원 목록·계정 발급 (관리자) | `OrganizationController`, `MemberService.addTeamMember` |
+| `FR-CT-001` | 센터 목록·등록 | `CenterController`, `CenterService` |
+| `FR-SL-001` | 투자 대비 효과 계산 | `RoiController`, `RoiEstimator` |
+| `FR-SL-002` | 도입 문의 접수 | `LeadController`, `LeadService` |
+| `SCR-00` | 영업 랜딩 | `client/src/routes.ts` `SCR00_LANDING` |
+| `SCR-01` | 데모 관제 (네트워크·KPI·3D·도크·이벤트) | `SCR01_DEMO` |
+| `SCR-02` | 로그인·워크스페이스 만들기 | `SCR02_LOGIN` |
+| `SCR-03` | 워크스페이스 (파일럿·센터·팀원) | `SCR03_WORKSPACE` |
 
-- 수집(M3)·제어(M7)·분석(M8) 기능이 생기면 `FR-CT-…`(관제), `FR-CM-…`(제어), `FR-AN-…`(분석)처럼 영역별 접두사로 이어 붙인다.
+- 수집(M3)·제어(M7)·분석(M8) 기능은 `FR-CT-…`(관제), `FR-CM-…`(제어), `FR-AN-…`(분석)으로 이어 붙인다.
 - 주석은 "왜"만. "무엇"은 이름으로 드러낸다.
 
 ---
@@ -144,10 +151,14 @@ com.marinbom2.logisticshubtwin
 │   ├── domain/       Member, RoleType, MemberRepository (core)
 │   ├── api/          AuthController, MeController, dto (server)
 │   └── application/  MemberService (server)
+├── organization/     고객사(테넌트) Organization, PlanType (core) · 워크스페이스 API (server)
+├── center/           센터 마스터 Center (core) · 센터 API (server)
+├── roi/              RoiEstimator 투자 대비 효과 계산 (core) · 계산기 API, 요금 설정 (server)
+├── sales/            도입 문의 Lead (core) · 문의 API (server)
 ├── security/         JWT·쿠키·필터 (server, authentication-security.md)
 │
 │   ── 이후 단계 ──
-├── center/  event/  kpi/  control/  analysis/     도메인·유스케이스 (core / server)
+├── event/  kpi/  control/  analysis/     도메인·유스케이스 (core / server)
 ├── ingest/rabbit/  state/redis/  history/jpa/  realtime/stomp/  llm/springai/   어댑터
 └── batch/            배치 작업 (batch)
 ```
@@ -212,7 +223,7 @@ jwt:
 ### 테스트
 
 - `SecurityErrorResponderTest`: Boot의 `JsonMapper`로 401·403을 썼을 때 같은 형식인지.
-- `AuthFlowTest`: 실제 필터 체인으로 401·403·로그인 실패·로그아웃 뒤 토큰 거절·필터 순서 (authentication-security.md 11절).
+- `AuthFlowTest`: 실제 필터 체인으로 401·403·로그인 실패·로그아웃 뒤 토큰 거절·필터 순서 (authentication-security.md 12절).
 
 ---
 
@@ -222,11 +233,14 @@ jwt:
 |---|---|---|
 | 인증 | `/api/v1/auth/...` | `/api/v1/auth/login`, `/api/v1/auth/logout` |
 | 내 정보 | `/api/v1/me` | `/api/v1/me/role` |
-| 관제 조회 | `/api/v1/centers/...` | `/api/v1/centers`, `/api/v1/centers/{centerId}/snapshot` |
+| 내 워크스페이스 | `/api/v1/organization` | `/api/v1/organization/members` |
+| 센터 | `/api/v1/centers/...` | `/api/v1/centers`, `/api/v1/centers/{centerId}/snapshot` |
+| 영업 (공개) | `/api/v1/roi/...`, `/api/v1/leads` | `/api/v1/roi/estimates` |
 | 제어 | `/api/v1/centers/{centerId}/control` | 운영자 이상 |
 | 분석 | `/api/v1/analysis/...` | `/api/v1/analysis/ask` |
 
 - 기획서 §8의 `/api/centers`는 이 규칙에 따라 `/api/v1/centers`로 둔다.
+- **고객사 ID 를 경로로 받지 않는다.** `/api/v1/organization`은 "로그인한 회원의 고객사"다. 서비스 메서드가 `member.getOrganizationId()`를 받아 거른다 (authentication-security.md §9).
 - 리소스는 복수 명사, 여러 단어면 kebab-case. 동작은 동사 경로 대신 HTTP 메서드로.
 - 컨트롤러 클래스에 `@Tag(name, description)`(description에 SCR ID), 메서드에 `@Operation(summary, description)`(description은 FR ID로 시작).
 - 엔드포인트 고유 오류만 `@ApiResponse`로 적는다. 공통 오류(401·403·500)는 적지 않는다.

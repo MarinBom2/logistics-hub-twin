@@ -1,12 +1,14 @@
 # logistics-hub-twin
 
-물류 허브 상하차 관제 시스템 (WCS · TMS 도메인) — 사이드 프로젝트 개발 기획서
+물류 허브 상하차 관제 시스템 (WCS · TMS 도메인) — 제품·기술 기획서
+
+> 제품명 **Hub Twin**. 택배·3PL 허브에 판매하는 B2B 제품으로 방향을 정했다 (2026-11-05). 사업 측면(고객, 가격, 파일럿, 효과 계산)은 [business-plan.md](./business-plan.md), 이 문서는 도메인과 기술 설계를 맡는다.
 
 - GitHub: `MarinBom2/logistics-hub-twin` (Public)
 - Group: `com.marinbom2`
 - 프로토타입 (3D 관제 화면): https://claude.ai/artifact/5PMZUELTEWN5YfnFj21bsM
 
-> 이 프로젝트는 허브 상하차 1일 아르바이트 체험을 바탕으로 한 개인 학습용 프로젝트이며, 특정 기업과 무관합니다. 화면과 데이터의 센터 구성, 처리량, 목적지는 모두 시뮬레이션 값입니다.
+> 허브 상하차 1일 아르바이트 체험에서 출발했으며, 특정 기업과 무관합니다. 데모 화면과 데이터의 센터 구성, 처리량, 목적지는 모두 시뮬레이션 값입니다.
 
 ---
 
@@ -297,6 +299,17 @@ MQTT 메시지는 `amq.topic` exchange로 들어오고 `/`는 `.`으로 바뀐�
 | PUT | `/api/v1/centers/{centerId}/control` | 유입량 · 집게차 대수 변경 (OPERATOR 이상, 감사 기록) |
 | POST | `/api/v1/analysis/ask` | LLM 분석 질의 |
 
+이미 만든 B2B API (고객사 워크스페이스, 영업)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| POST | `/api/v1/auth/signup` | 가입 = 고객사 워크스페이스(8주 파일럿) + 관리자 |
+| GET | `/api/v1/organization` | 내 워크스페이스 (회사명, 요금제, 파일럿 종료) |
+| GET·POST | `/api/v1/organization/members` | 팀원 목록·계정 발급 (관리자) |
+| GET·POST | `/api/v1/centers` | 내 고객사 센터 목록·등록 (등록은 관리자) |
+| POST | `/api/v1/roi/estimates` | 투자 대비 효과 계산 (공개, 랜딩) |
+| POST | `/api/v1/leads` | 도입 문의 (공개, 랜딩) |
+
 ### WebSocket (STOMP)
 
 | 토픽 | 내용 |
@@ -311,7 +324,14 @@ MQTT 메시지는 `amq.topic` exchange로 들어오고 `/`는 `.`으로 바뀐�
 
 ## 9. 프론트엔드 화면
 
-프로토타입 기준.
+| 화면 | 경로 | 내용 |
+|---|---|---|
+| SCR-00 랜딩 | `/` | 라이브 3D 데모, 문제·제품·효과 계산기·파일럿·가격·보안·도입 문의 |
+| SCR-01 데모 관제 | `/demo/centers/:centerId` | 아래 관제 화면을 시뮬레이션 데이터로 (로그인 없이) |
+| SCR-02 로그인 | `/login` | 로그인, 워크스페이스 만들기 |
+| SCR-03 워크스페이스 | `/workspace` | 파일럿 남은 날, 센터 등록, 팀원 계정 발급 |
+
+관제 화면 구성 (프로토타입 기준).
 
 - **센터 네트워크**: 지역 필터, 센터 카드(시간당 처리량, 판독률, 적체, 출발 대수, 상태 칩)
 - **선택 센터 KPI**: 시간당 분류량, 누적 처리, 판독률 · 리젝트 · 재순환, 적체 분류구, 출발 대수

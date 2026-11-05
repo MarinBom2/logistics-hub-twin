@@ -14,7 +14,9 @@
 | 토큰 | JWT(HS256), **HttpOnly 쿠키** `lht_at`, 유효 12시간. claim 은 회원 ID 와 토큰 버전뿐 |
 | 로그아웃 | `Member.tokenVersion`을 1 올려 그 전에 발급한 토큰을 전부 무효화 |
 | 권한 | 토큰이 아니라 요청마다 DB 의 현재 값. `VIEWER`(조회), `OPERATOR`(운영자), `ADMIN`(관리자). ROLE_ 접두사 없음 |
-| 인가 규칙 | 관제 조회 `GET /api/v1/centers/**`는 로그인 없이, 제어 `/api/v1/centers/*/control`은 `OPERATOR`·`ADMIN`, 나머지 `/api/**`는 로그인 필요 |
+| 고객사 분리 | 회원은 고객사(Organization) 하나에 속한다. 모든 고객사 데이터 조회는 로그인한 회원의 고객사 ID 로 거른다 (9절) |
+| 가입 | 가입 = 워크스페이스(고객사, 8주 파일럿) + 첫 관리자. 팀원은 관리자가 발급 |
+| 인가 규칙 | 공개: 가입·로그인·로그아웃, 효과 계산기·도입 문의(랜딩). 관리자: 팀원 관리, 센터 등록. 운영자 이상: 제어. 나머지 `/api/**`는 로그인 필요 |
 | 세션 | 없음 (STATELESS) |
 | CSRF | 토큰 끔. SameSite=Lax 쿠키 + 같은 오리진 + CORS 없음으로 막는다 (6절) |
 | 오류 | 401·403·로그인 실패 모두 ProblemDetail + `code` (`SecurityErrorResponder`) |
@@ -143,7 +145,7 @@ principal 로 들어가는 `Member`는 트랜잭션 밖에서 읽은 준영속 �
 
 | 자리 | 상황 | 응답 |
 |---|---|---|
-| `AuthenticationEntryPoint` | 인증 없이 보호 경로 | 401 `UNAUTHORIZED` / JWT 필터가 남긴 이유가 있으면 401 `INVALID_ACCESS_TOKEN` |
+| `AuthenticationEntryPoint` | 인증 없이 보호 경로 (예: 로그인 없이 센터 목록) | 401 `UNAUTHORIZED` / JWT 필터가 남긴 이유가 있으면 401 `INVALID_ACCESS_TOKEN` |
 | `AccessDeniedHandler` | 권한 부족 (VIEWER 가 제어 명령) | 403 `FORBIDDEN` (401 이면 클라이언트가 로그아웃시키므로 반드시 403) |
 | `AuthenticationFailureHandler` | 로그인 실패 | 400 `INVALID_REQUEST_DATA`(형식) / 401 `LOGIN_FAILED` |
 
@@ -161,7 +163,22 @@ principal 로 들어가는 `Member`는 트랜잭션 밖에서 읽은 준영속 �
 
 ---
 
-## 9. 클래스 목록
+## 9. 고객사 분리 (멀티테넌시)
+
+| 규칙 | 어디서 |
+|---|---|
+| 회원은 고객사 하나에 속한다 (`Member.organizationId`, not null) | core `member.domain` |
+| 경로로 고객사 ID 를 받지 않는다. 늘 `@AuthenticationPrincipal Member`의 고객사 | `OrganizationController`, `CenterController` |
+| 서비스 메서드는 고객사 ID 를 첫 인자로 받고, 리포지토리 조회는 `findAllByOrganizationId…`처럼 고객사 ID 를 포함한다 | `CenterService`, `MemberService.teamMembers` |
+| 다른 고객사의 데이터는 "없음"과 같다 (목록에 없고, 단건은 404) | `AuthFlowTest.tenantIsolation` |
+| 센터 코드는 고객사 안에서만 유일하다 (`uk_center_org_code`) | 같은 `HUB-Y3`를 두 고객사가 각자 쓸 수 있다 |
+| 이메일(로그인 ID)은 전체에서 유일하다 | 한 사람이 두 고객사에 속하려면 이메일을 따로 쓴다. 필요해지면 회원-고객사 연결 테이블로 바꾼다 |
+
+M3 에서 붙는 상태(Redis)·이력(MySQL) 저장소도 키에 고객사를 넣는다: `hub:{organizationId}:{centerCode}:…`, `hub_event.organization_id`.
+
+---
+
+## 10. 클래스 목록
 
 | 클래스 | 모듈·패키지 | 역할 |
 |---|---|---|
@@ -178,51 +195,61 @@ principal 로 들어가는 `Member`는 트랜잭션 밖에서 읽은 준영속 �
 | `AccessTokenCookie` | server `security.cookie` | 쿠키 발급·삭제·읽기 |
 | `SecurityErrorResponder` | server `security` | 401·403·로그인 실패 ProblemDetail |
 | `MemberSecurityProperties` | server `security` | 백도어, 권한 바꾸기 설정 |
-| `AuthController`, `MeController`, `MemberService` | server `member.api`, `member.application` | 가입, 로그아웃, 내 정보, 권한 바꾸기 |
+| `AuthController`, `MeController`, `MemberService` | server `member.api`, `member.application` | 가입(워크스페이스), 팀원 발급, 로그아웃, 내 정보, 권한 바꾸기 |
+| `Organization`, `OrganizationController` | core `organization.domain`, server `organization.api` | 고객사, 내 워크스페이스, 팀원 |
+| `Center`, `CenterController`, `CenterService` | core `center.domain`, server `center` | 고객사별 센터 |
 
 API:
 
 | 메서드 | 경로 | 인증 | FR |
 |---|---|---|---|
-| POST | `/api/v1/auth/signup` | 없음 | FR-AU-001 |
+| POST | `/api/v1/auth/signup` | 없음 (워크스페이스 + 관리자) | FR-AU-001 |
 | POST | `/api/v1/auth/login` | 없음 (필터) | FR-AU-002 |
 | POST | `/api/v1/auth/logout` | 없음 (있으면 토큰 무효화, 항상 쿠키 삭제) | FR-AU-002 |
 | GET | `/api/v1/me` | 필요 | FR-AU-002 |
 | PATCH | `/api/v1/me/role` | 필요 (local 설정에서만) | FR-AU-003 |
-| GET | `/api/v1/centers/**` | 없음 (M3 에서 구현) | |
+| GET | `/api/v1/organization` | 필요 | FR-OR-001 |
+| GET·POST | `/api/v1/organization/members` | `ADMIN` | FR-OR-002 |
+| GET | `/api/v1/centers` | 필요 (내 고객사만) | FR-CT-001 |
+| POST | `/api/v1/centers` | `ADMIN` | FR-CT-001 |
 | * | `/api/v1/centers/*/control` | `OPERATOR`, `ADMIN` (M7 에서 구현) | FR-AU-003 |
+| POST | `/api/v1/roi/estimates` | 없음 (랜딩) | FR-SL-001 |
+| POST | `/api/v1/leads` | 없음 (랜딩) | FR-SL-002 |
 
 ---
 
-## 10. 계약봄과 달라진 점
+## 11. 계약봄과 달라진 점
 
 | 항목 | 계약봄 | 이 프로젝트 | 이유 |
 |---|---|---|---|
-| 가입 | 이메일 인증번호 → 가입, 동의 세 가지 | 이메일·비밀번호만 | 관제 도구라 일반 사용자 가입 흐름이 필요 없다 |
+| 가입 | 이메일 인증번호 → 가입, 동의 세 가지 | 회사명·이메일·비밀번호 → 워크스페이스 + 관리자 | B2B: 고객사 단위로 쓰고 팀원은 관리자가 발급 |
 | 소셜 로그인 | 카카오·네이버 체인 | 없음 | 쓰는 곳이 없다 (solid.md I) |
 | 권한 | USER, ADMIN, SYSTEM / 운영자 API `/api/v1/ops/**` | VIEWER, OPERATOR, ADMIN / 제어 API `/api/v1/centers/*/control` | 기획서 §3 "제어 명령은 인증 + 이력 기록" |
-| 공개 API | 인증·가입만 | 관제 조회 GET 도 공개 | 관제 화면은 로그인 없이 본다 |
+| 공개 API | 인증·가입만 | 인증·가입 + 효과 계산기·도입 문의 | 랜딩 페이지가 로그인 없이 부른다. 데모 관제는 서버를 부르지 않는다 |
 | 쿠키 이름 | `gyeyakbom_at` | `lht_at` | |
 | `AccessUserInfo` | 있음 | 옮기지 않음 | 컨트롤러 밖에서 로그인 회원을 꺼낼 곳이 아직 없다. 제어 감사 로그(M7)에서 필요하면 추가 |
 | 비밀번호 규칙 | 6~20자, 두 종류 조합 | 8~20자, 영문·숫자 포함 | |
 
 ---
 
-## 11. 테스트
+## 12. 테스트
 
 | 테스트 | 확인하는 것 |
 |---|---|
 | `JwtTokenProviderTest` | 발급·검증 왕복, 만료, 위조·다른 키, 짧은 키 기동 실패, 빈 키 임시 동작 |
-| `MemberAuthenticationProviderTest` | 성공(권한 VIEWER), 계정 없음과 비밀번호 불일치가 같은 예외, 백도어, `supports` |
+| `MemberAuthenticationProviderTest` | 성공, 계정 없음과 비밀번호 불일치가 같은 예외, 백도어, `supports` |
+| `RoiEstimatorTest` (core) | 기본 예 금액, 허브 수 비례, 목표 적재율 경계(69·70·71), 개선 0%, 구독료 0, 원 단위 내림, 범위 밖 입력 |
 | `SecurityErrorResponderTest` | 401·403 ProblemDetail, JWT 필터가 남긴 이유 반영 |
-| `AuthFlowTest` (MySQL Testcontainers) | 가입 → 로그인 쿠키 → 내 정보, 가입 검증(409·400), 로그인 실패(401·400), 무인증·위조 401, 관제 조회 공개, 제어 VIEWER 403 → OPERATOR 로 바꾸면 통과, 로그아웃 후 토큰 거절, 체인 밖 경로, **실제 필터 순서** |
+| `AuthFlowTest` (MySQL Testcontainers) | 가입(워크스페이스·관리자) → 로그인 쿠키 → 내 정보·워크스페이스, 가입 검증(409·400), **고객사 분리**, 팀원 권한(VIEWER 403·OPERATOR 제어 인가), 내 권한 바꾸기, 랜딩 공개 API, 로그인 실패, 무인증·위조 401, 로그아웃 후 토큰 거절, 체인 밖 경로, 필터 순서 |
 
 Docker 가 없는 환경에서는 `AuthFlowTest`·`ServerApplicationTests`가 건너뛴다 (`disabledWithoutDocker`).
 
-## 12. 정하지 않은 것
+## 13. 정하지 않은 것
 
 - [ ] 토큰 갱신(refresh). 지금은 12시간 토큰 하나, 만료되면 다시 로그인
 - [ ] 로그인 실패 횟수 제한
-- [ ] 관리자가 다른 회원의 권한을 바꾸는 API (`/api/v1/admin/members/{id}/role`)
+- [ ] 관리자가 팀원의 권한을 바꾸거나 계정을 잠그는 API (`/api/v1/organization/members/{id}`)
+- [ ] 팀원 초기 비밀번호를 첫 로그인 때 바꾸게 하기
+- [ ] 랜딩 공개 API(계산기·문의) 요청 속도 제한
 - [ ] 제어 명령 감사 로그(`control_audit`)에 요청자 기록 — M7
 - [ ] edge-collector → 서버 인증은 사람 로그인과 다르다. RabbitMQ 사용자·vhost 권한으로 막는다 (M2·M3)
