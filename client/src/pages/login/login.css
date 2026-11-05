@@ -33,9 +33,3 @@
   border-color: transparent;
   color: var(--muted);
 }
-
-.form-notice {
-  margin: 0;
-  font-size: 13px;
-  color: var(--ok);
-}

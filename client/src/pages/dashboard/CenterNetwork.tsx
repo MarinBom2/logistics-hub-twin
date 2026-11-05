@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { CenterSummary } from '../../features/twin/sim/types'
-import { dashboardPath } from '../../routes'
+import { demoPath } from '../../routes'
 import { LEVEL_TEXT, formatNumber, levelClass } from './levels'
 
 const ALL = '전체'
@@ -34,7 +34,7 @@ export function CenterNetwork({ summaries, selectedId }: { summaries: CenterSumm
             className="center"
             aria-pressed={center.id === selectedId}
             hidden={region !== ALL && center.region !== region}
-            onClick={() => navigate(dashboardPath(center.id))}
+            onClick={() => navigate(demoPath(center.id))}
           >
             <div className="h">
               <div className="nm">

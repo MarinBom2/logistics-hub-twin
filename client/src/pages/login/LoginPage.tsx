@@ -10,8 +10,8 @@ import './login.css'
 type Mode = 'login' | 'signup'
 
 /**
- * SCR-02 로그인·가입 (FR-AU-001, FR-AU-002). 관제 조회는 로그인 없이 되고,
- * 로그인은 제어 명령(운영자 이상)을 쓸 때 필요하다 (md/authentication-security.md).
+ * SCR-02 로그인·워크스페이스 만들기 (FR-AU-001, FR-AU-002).
+ * 가입하면 회사 워크스페이스가 8주 파일럿으로 열리고 가입한 사람이 관리자가 된다. 팀원은 관리자가 발급한다.
  */
 export default function LoginPage() {
   const [search, setSearch] = useSearchParams()
@@ -20,10 +20,10 @@ export default function LoginPage() {
   const mode: Mode = search.get('mode') === 'signup' ? 'signup' : 'login'
   const next = safeNext(search)
 
+  const [organizationName, setOrganizationName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const [notice, setNotice] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
   if (status === 'authenticated') return <Navigate to={next} replace />
@@ -34,7 +34,6 @@ export default function LoginPage() {
     else params.delete('mode')
     setSearch(params, { replace: true })
     setError(null)
-    setNotice(null)
   }
 
   const submit = async (event: FormEvent) => {
@@ -44,9 +43,9 @@ export default function LoginPage() {
     clearExpiredReason()
     try {
       if (mode === 'signup') {
-        await authApi.signup({ email, password })
-        switchMode('login')
-        setNotice('가입했어요. 이제 로그인해 주세요. 처음에는 조회 권한으로 시작합니다.')
+        await authApi.signup({ organizationName, email, password })
+        await login({ email, password })
+        navigate(next, { replace: true })
       } else {
         await login({ email, password })
         navigate(next, { replace: true })
@@ -61,16 +60,27 @@ export default function LoginPage() {
   return (
     <div className="wrap login-wrap">
       <form className="card login-card" onSubmit={submit} noValidate>
-        <h1>{mode === 'signup' ? '가입' : '로그인'}</h1>
+        <h1>{mode === 'signup' ? '워크스페이스 만들기' : '로그인'}</h1>
         <p className="lead">
           {mode === 'signup'
-            ? '이메일로 가입하면 조회 권한으로 시작해요. 제어 권한은 관리자가 올려 줍니다.'
-            : '관제 화면은 로그인 없이 볼 수 있어요. 제어 명령은 운영자 권한이 필요합니다.'}
+            ? '회사 워크스페이스가 8주 파일럿으로 열리고, 만든 분이 관리자가 됩니다. 팀원 계정은 워크스페이스에서 발급해요.'
+            : '고객사 워크스페이스에 들어갑니다. 계정은 회사 관리자가 발급합니다.'}
         </p>
         {expiredReason && <p className="form-error">{expiredReason}</p>}
-        {notice && <p className="form-notice">{notice}</p>}
+        {mode === 'signup' && (
+          <div className="field">
+            <label htmlFor="organizationName">회사명</label>
+            <input
+              id="organizationName"
+              autoComplete="organization"
+              value={organizationName}
+              onChange={(event) => setOrganizationName(event.target.value)}
+              required
+            />
+          </div>
+        )}
         <div className="field">
-          <label htmlFor="email">이메일</label>
+          <label htmlFor="email">업무 이메일</label>
           <input
             id="email"
             type="email"
@@ -97,11 +107,11 @@ export default function LoginPage() {
             {error}
           </p>
         )}
-        <button type="submit" className="btn primary" disabled={busy || !email || !password}>
-          {busy ? '처리 중…' : mode === 'signup' ? '가입하기' : '로그인'}
+        <button type="submit" className="btn primary" disabled={busy || !email || !password || (mode === 'signup' && !organizationName)}>
+          {busy ? '처리 중…' : mode === 'signup' ? '파일럿 시작하기' : '로그인'}
         </button>
         <button type="button" className="btn ghost switch" onClick={() => switchMode(mode === 'signup' ? 'login' : 'signup')}>
-          {mode === 'signup' ? '이미 계정이 있어요' : '처음이에요 · 가입하기'}
+          {mode === 'signup' ? '이미 계정이 있어요' : '처음이에요 · 워크스페이스 만들기'}
         </button>
       </form>
     </div>

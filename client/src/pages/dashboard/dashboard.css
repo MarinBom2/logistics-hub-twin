@@ -1,3 +1,22 @@
+/* 데모 안내 띠 */
+.demo-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+  background: var(--panel);
+}
+
+.demo-banner p {
+  margin: 0;
+  flex: 1 1 320px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
 /* SCR-01 관제 화면. 배치: 센터 네트워크 → 선택 센터 머리글·KPI → 3D 현장 옆 도크·이벤트 */
 
 /* 네트워크 */
@@ -309,167 +328,6 @@
   align-items: stretch;
 }
 
-.stage {
-  flex: 999 1 720px;
-  min-width: 0;
-  position: relative;
-  height: clamp(420px, 66vh, 780px);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  overflow: hidden;
-  background: var(--ground);
-}
-
-.stage canvas {
-  display: block;
-  touch-action: none;
-}
-
-.tag {
-  position: absolute;
-  left: 0;
-  top: 0;
-  transform: translate(-50%, -100%);
-  background: var(--glass);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 4px 8px;
-  font-family: var(--mono);
-  font-size: 12px;
-  white-space: nowrap;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--fg);
-  user-select: none;
-}
-
-.tag i {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--info);
-  flex: none;
-}
-
-.tag em {
-  font-style: normal;
-  color: var(--muted);
-  font-family: var(--sans);
-  font-size: 11px;
-}
-
-.tag[data-s='wait'] {
-  border-color: rgba(242, 178, 48, 0.6);
-}
-
-.tag[data-s='wait'] i {
-  background: var(--safety);
-}
-
-.tag[data-s='jam'] {
-  border-color: var(--crit);
-}
-
-.tag[data-s='jam'] i {
-  background: var(--crit);
-}
-
-.tag.dock {
-  font-size: 11px;
-}
-
-.tag.dock[data-s='late'] {
-  border-color: var(--crit);
-}
-
-.tag.dock[data-s='late'] b {
-  color: var(--crit);
-}
-
-.tag.fixed {
-  color: var(--muted);
-  font-size: 11px;
-  letter-spacing: 0.06em;
-}
-
-.cams {
-  position: absolute;
-  left: 12px;
-  top: 12px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  z-index: 30;
-}
-
-.cams button {
-  font-size: 12px;
-  font-weight: 500;
-  background: var(--glass);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  min-height: 34px;
-  padding: 0 12px;
-  cursor: pointer;
-}
-
-.cams button[aria-pressed='true'] {
-  border-color: var(--safety);
-  color: var(--safety);
-}
-
-.hint,
-.legend {
-  position: absolute;
-  bottom: 10px;
-  z-index: 30;
-  font-size: 11px;
-  color: var(--muted);
-  background: var(--glass);
-  pointer-events: none;
-}
-
-.hint {
-  right: 12px;
-  padding: 4px 8px;
-  border-radius: 6px;
-}
-
-.legend {
-  left: 12px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  padding: 6px 10px;
-  border-radius: 8px;
-}
-
-.legend span {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.legend span::before {
-  content: '';
-  width: 9px;
-  height: 9px;
-  border-radius: 2px;
-  background: var(--c);
-}
-
-.fallback {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 24px;
-  color: var(--muted);
-}
-
 .rail {
   flex: 1 1 340px;
   min-width: 0;
@@ -612,19 +470,5 @@
 
   .clock b {
     font-size: 22px;
-  }
-
-  .stage {
-    height: clamp(360px, 60vh, 520px);
-  }
-
-  .tag {
-    font-size: 11px;
-    padding: 3px 6px;
-  }
-
-  .tag.dock,
-  .hint {
-    display: none;
   }
 }

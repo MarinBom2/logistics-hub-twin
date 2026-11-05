@@ -4,12 +4,15 @@ import type { CodeLabel } from '../../types/common'
 // 이 판별식은 파일마다 직접 둔다. 공통 모듈로 빼면 운영 빌드에서 mock 분기가 지워지지 않는다
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true' || import.meta.env.MODE === 'mock'
 
+export type RoleCode = 'VIEWER' | 'OPERATOR' | 'ADMIN'
+
 /** 서버 MemberResponse */
 export interface MemberProfile {
   memberId: number
+  organizationId: number
   email: string
   /** VIEWER(조회) · OPERATOR(운영자) · ADMIN(관리자) */
-  roleType: CodeLabel
+  roleType: CodeLabel<RoleCode>
 }
 
 export interface MemberApi {

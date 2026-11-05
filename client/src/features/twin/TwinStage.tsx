@@ -1,9 +1,10 @@
 import { Component, Suspense, lazy, useState } from 'react'
 import type { ReactNode } from 'react'
-import type { Center } from '../../features/twin/sim/Center'
-import { CAMERA_PRESETS } from '../../features/twin/scene/cameras'
-import type { CameraPreset } from '../../features/twin/scene/cameras'
+import type { Center } from './sim/Center'
+import { CAMERA_PRESETS } from './scene/cameras'
+import type { CameraPreset } from './scene/cameras'
 import { loadTwinScene } from '../../routeChunks'
+import './twin.css'
 
 const TwinScene = lazy(loadTwinScene)
 
@@ -26,12 +27,12 @@ class SceneBoundary extends Component<{ children: ReactNode }, { failed: boolean
   }
 }
 
-/** 3D 현장과 그 위 겹침 UI(카메라 시점, 범례, 조작 안내) */
-export function TwinStage({ center }: { center: Center }) {
+/** 3D 현장과 그 위 겹침 UI(카메라 시점, 범례, 조작 안내). 데모 관제와 랜딩이 같이 쓴다 */
+export function TwinStage({ center, className }: { center: Center; className?: string }) {
   const [preset, setPreset] = useState<CameraPreset>('all')
 
   return (
-    <div className="stage">
+    <div className={className ? `stage ${className}` : 'stage'}>
       <SceneBoundary>
         <Suspense fallback={<div className="fallback">3D 현장을 불러오는 중…</div>}>
           <TwinScene center={center} preset={preset} fallback={<Fallback />} />

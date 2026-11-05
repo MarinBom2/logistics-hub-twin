@@ -1,0 +1,77 @@
+/* SCR-03 워크스페이스 */
+.workspace {
+  padding-top: 32px;
+}
+
+.ws-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+.ws-head h1 {
+  margin: 4px 0;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.ws-sub,
+.ws-muted {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.ws-plan {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+}
+
+.ws-plan strong {
+  font-family: var(--mono);
+  font-size: 22px;
+}
+
+.ws-plan span:last-child {
+  font-size: 12px;
+  color: var(--muted);
+  max-width: 260px;
+}
+
+.ws-next ol {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.ws-next .btn {
+  align-self: flex-start;
+}
+
+.ws-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+.ws-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  gap: 10px;
+  align-items: end;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+@media (max-width: 960px) {
+  .ws-grid,
+  .ws-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

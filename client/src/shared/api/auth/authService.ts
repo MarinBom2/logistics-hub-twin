@@ -10,8 +10,9 @@ export interface MemberLoginRequest {
   password: string
 }
 
-/** 서버 MemberSignupRequest (FR-AU-001). 비밀번호는 8~20자, 영문·숫자 포함 */
+/** 서버 MemberSignupRequest (FR-AU-001). 가입 = 워크스페이스 만들기. 비밀번호는 8~20자, 영문·숫자 포함 */
 export interface MemberSignupRequest {
+  organizationName: string
   email: string
   password: string
 }
@@ -19,7 +20,7 @@ export interface MemberSignupRequest {
 export interface AuthApi {
   /** 성공하면 인증 쿠키(HttpOnly)가 붙고 본문은 회원 정보. 실패는 ApiError.code === 'LOGIN_FAILED' */
   login: (request: MemberLoginRequest) => Promise<MemberProfile>
-  /** 가입만 한다. 로그인은 따로 부른다. 이미 있으면 ALREADY_EXIST */
+  /** 워크스페이스(파일럿)와 관리자 계정을 만든다. 로그인은 따로 부른다. 이미 있으면 ALREADY_EXIST */
   signup: (request: MemberSignupRequest) => Promise<MemberProfile>
   /** 이 계정으로 발급한 토큰을 전부 무효로 만들고 쿠키를 지운다 (204) */
   logout: () => Promise<void>
